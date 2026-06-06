@@ -1,14 +1,24 @@
 # archivo: vistas/gestion_miembros_view.py
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QTableWidget, QTableWidgetItem, QFrame, QAbstractItemView, QHeaderView
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, 
+                             QTableWidget, QTableWidgetItem, QFrame, QAbstractItemView, 
+                             QHeaderView, QPushButton, QMessageBox, QDialog)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
+# Importamos la ventana modal de edición aislada
+from vistas.formulario_editar_vista import FormularioEditarDialog 
+
 class GestionMiembrosView(QWidget):
-    def __init__(self, callback_filtrar, callback_seleccionar_miembro):
+    def __init__(self, callback_filtrar, callback_seleccionar_miembro, callback_aceptar, callback_eliminar, callback_actualizar, controller):
         super().__init__()
         self.callback_filtrar = callback_filtrar
         self.callback_seleccionar_miembro = callback_seleccionar_miembro
+        self.callback_aceptar = callback_aceptar
+        self.callback_eliminar = callback_eliminar
+        self.callback_actualizar = callback_actualizar
+        self.controller = controller # 
         
+        self.miembro_actual_vo = None 
         self.init_ui()
 
     def init_ui(self):
@@ -84,13 +94,11 @@ class GestionMiembrosView(QWidget):
             }
         """)
         
-        # Ajustar tamaño de columnas automáticamente
         header = self.tabla_miembros.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.Stretch)
         
-        # Evento al hacer clic en una fila
         self.tabla_miembros.itemSelectionChanged.connect(self.on_fila_seleccionada)
         
         panel_izquierdo.addWidget(self.tabla_miembros)
@@ -108,11 +116,10 @@ class GestionMiembrosView(QWidget):
         layout_principal.addWidget(self.panel_derecho, stretch=2)
 
     # =================================================================
-    # MÉTODOS DE CONTROL DE DATOS (Invocados por el Controlador)
+    # MÉTODOS DE CONTROL DE DATOS
     # =================================================================
 
     def llenar_combo_departamentos(self, lista_departamentos):
-        """🔥 SOLUCIÓN 1: Llena el ComboBox dinámicamente desde la BD sin duplicar 'Todos'"""
         self.combo_departamentos.blockSignals(True) 
         self.combo_departamentos.clear()
         self.combo_departamentos.addItem("Todos")
@@ -121,7 +128,6 @@ class GestionMiembrosView(QWidget):
         self.combo_departamentos.blockSignals(False)
 
     def llenar_tabla_miembros(self, lista_miembros):
-        """Pinta las filas de la tabla de forma segura sin romper la interfaz"""
         self.tabla_miembros.blockSignals(True)
         self.tabla_miembros.setRowCount(0)
         
@@ -143,7 +149,7 @@ class GestionMiembrosView(QWidget):
         self.mostrar_mensaje_vacio()
 
     def mostrar_panel_derecho(self, miembro_vo):
-        """Limpia el contenedor derecho e introduce los datos del VO recibido"""
+        self.miembro_actual_vo = miembro_vo
         self.limpiar_layout_derecho()
 
         lbl_ficha = QLabel("Ficha del Miembro")
@@ -151,10 +157,13 @@ class GestionMiembrosView(QWidget):
         self.layout_derecho.addWidget(lbl_ficha)
 
         def agregar_campo(titulo, valor):
-            lbl = QLabel(f"<b>{titulo}:</b> {str(valor).strip() if valor else 'No asignado'}")
+            # Forzamos conversión a string nativo de Python para curarnos en salud
+            texto_valor = str(valor).strip() if valor else "No asignado"
+            lbl = QLabel(f"<b>{titulo}:</b> {texto_valor}")
             lbl.setStyleSheet("font-size: 13px; color: #333333; border: none; margin-bottom: 6px;")
             self.layout_derecho.addWidget(lbl)
 
+        # Datos básicos del Miembro extraídos de tu tabla Miembros
         agregar_campo("Nombre completo", f"{miembro_vo.Name} {miembro_vo.Surname}")
         agregar_campo("Usuario", miembro_vo.NombreUsuario)
         agregar_campo("Rol asignado", miembro_vo.Rol)
@@ -162,7 +171,10 @@ class GestionMiembrosView(QWidget):
         agregar_campo("Teléfono", miembro_vo.Telefono)
         agregar_campo("Email", miembro_vo.Email)
         
-        # Estado de Aceptación con formato de color condicional
+        agregar_campo("Departamentos Asignados", getattr(miembro_vo, 'Departamento', 'Ninguno'))
+        agregar_campo("Grupos de Trabajo", getattr(miembro_vo, 'Grupo', 'Ninguno'))
+        
+        # Estado de aceptación
         estado_texto = "Aceptado en el Sistema" if miembro_vo.Aceptado == 1 else "Pendiente de Aceptación"
         lbl_estado = QLabel(f"<b>Estado:</b> {estado_texto}")
         if miembro_vo.Aceptado == 1:
@@ -171,10 +183,69 @@ class GestionMiembrosView(QWidget):
             lbl_estado.setStyleSheet("font-size: 13px; color: #E74C3C; font-weight: bold; border: none;")
             
         self.layout_derecho.addWidget(lbl_estado)
+        self.layout_derecho.addSpacing(15)
+
+        style_botones = """
+            QPushButton {
+                color: #FFFFFF;
+                font-weight: bold;
+                font-size: 12px;
+                border: 2px solid #000000;
+                border-radius: 5px;
+                padding: 6px;
+            }
+            QPushButton:hover { opacity: 0.9; }
+        """
+        
+        if miembro_vo.Aceptado != 1:
+            btn_aceptar = QPushButton("Aceptar en el Sistema")
+            btn_aceptar.setStyleSheet(style_botones + "QPushButton { background-color: #2ECC71; }")
+            btn_aceptar.clicked.connect(lambda: self.callback_aceptar(miembro_vo.UsuarioID))
+            self.layout_derecho.addWidget(btn_aceptar)
+            
+        btn_editar = QPushButton("Editar Datos")
+        btn_editar.setStyleSheet(style_botones + "QPushButton { background-color: #3498DB; }")
+        btn_editar.clicked.connect(self.abrir_dialogo_edicion)
+        self.layout_derecho.addWidget(btn_editar)
+        
+        btn_eliminar = QPushButton("Eliminar Miembro")
+        btn_eliminar.setStyleSheet(style_botones + "QPushButton { background-color: #E74C3C; }")
+        btn_eliminar.clicked.connect(lambda: self.confirmar_eliminacion(miembro_vo.UsuarioID))
+        self.layout_derecho.addWidget(btn_eliminar)
+
         self.layout_derecho.addStretch()
 
+    def abrir_dialogo_edicion(self):
+        if self.miembro_actual_vo:
+            deptos, grupos = self.controller.obtener_listados_para_edicion(self.miembro_actual_vo)
+            
+            dialogo = FormularioEditarDialog(self, self.miembro_actual_vo, deptos, grupos)
+            
+            if dialogo.exec_() == QDialog.Accepted:
+                datos = dialogo.obtener_datos()
+
+                self.callback_actualizar(
+                    self.miembro_actual_vo.UsuarioID,
+                    datos["dni"], 
+                    datos["nombre"], 
+                    datos["apellido"],
+                    datos["telefono"], 
+                    datos["email"], 
+                    datos["rol"],
+                    datos["departamentos_lista"],  
+                    datos["grupos_lista"]          
+                )
+
+
+    def confirmar_eliminacion(self, usuario_id):
+        msg = QMessageBox.question(self, "Confirmar Eliminación", 
+                                   "¿Estás completamente seguro de eliminar a este miembro?\nEsta acción no se puede deshacer.",
+                                   QMessageBox.Yes | QMessageBox.No)
+        if msg == QMessageBox.Yes:
+            self.callback_eliminar(usuario_id)
+
+
     def mostrar_mensaje_vacio(self):
-        """Restablece el estado visual del panel derecho"""
         self.limpiar_layout_derecho()
         lbl_vacio = QLabel("Selecciona un miembro de la lista izquierda para ver su información detallada.")
         lbl_vacio.setStyleSheet("color: #888888; font-size: 13px; font-style: italic; border: none;")
@@ -183,7 +254,6 @@ class GestionMiembrosView(QWidget):
         self.layout_derecho.addWidget(lbl_vacio)
 
     def limpiar_layout_derecho(self):
-        """Elimina todos los elementos hijos del layout derecho sin romper el widget padre"""
         while self.layout_derecho.count():
             item = self.layout_derecho.takeAt(0)
             widget = item.widget()
@@ -191,7 +261,6 @@ class GestionMiembrosView(QWidget):
                 widget.deleteLater()
 
     def on_fila_seleccionada(self):
-        """Captura la fila activa, lee el ID oculto y se lo envía al Controlador"""
         filas_seleccionadas = self.tabla_miembros.selectedItems()
         if not filas_seleccionadas:
             return
@@ -201,3 +270,15 @@ class GestionMiembrosView(QWidget):
             usuario_id = item_nombre.data(Qt.UserRole)
             if usuario_id is not None:
                 self.callback_seleccionar_miembro(int(usuario_id))
+
+    def obtener_filtro_actual(self):
+        return self.combo_departamentos.currentText()
+
+    def limpiar_detalle(self):
+        self.limpiar_layout_derecho()
+
+    def mostrar_mensaje_exito(self, mensaje):
+        QMessageBox.information(self, "Operación Exitosa", mensaje)
+
+    def mostrar_mensaje_error(self, mensaje):
+        QMessageBox.critical(self, "Error de Operación", mensaje)

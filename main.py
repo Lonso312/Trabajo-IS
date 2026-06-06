@@ -29,7 +29,7 @@ class ControladorApp:
             self.departamento_dao = DepartamentoDAO(self.conexion) 
             self.tarea_controller = TareaController(self.tarea_dao)
             self.grupo_controller = GrupoController(self.grupo_dao)
-            self.usuario_controller = UsuarioController(self.miembro_dao, self.departamento_dao) 
+            self.usuario_controller = UsuarioController(self.miembro_dao, self.departamento_dao, self.grupo_dao) 
             
         except Exception as e:
             print(f"Error crítico: {e}")

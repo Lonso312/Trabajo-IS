@@ -46,70 +46,69 @@ class MiembroDAO:
             cursor.close()
         return lista_miembros
 
-    def buscar_por_id(self, UsuarioID):
-        """SELECT BY ID: Busca un miembro específico por su llave primaria"""
+    def buscar_por_id(self, usuario_id):
         cursor = self.conexion.cursor()
         
-        sql = "SELECT UsuarioID, Name, Surname, DNI, Email, NombreUsuario, Rol, Aceptado, Telefono FROM Miembros WHERE UsuarioID = ?"
+        sql = """
+            SELECT m.UsuarioID, m.DNI, m.Name, m.NombreUsuario, m.Surname, m.Rol, m.Aceptado, m.Telefono, m.Email,
+                   (SELECT STRING_AGG(CAST(d.tipo AS VARCHAR(MAX)), ', ') 
+                    FROM EstaEnDepartamento ed 
+                    INNER JOIN Departamentos d ON ed.DepartamentoID = d.Num_Dep 
+                    WHERE ed.UsuarioID = m.UsuarioID) AS Departamentos,
+                   (SELECT STRING_AGG(CAST(g.Name AS VARCHAR(MAX)), ', ') 
+                    FROM EstaEnGrupo eg 
+                    INNER JOIN Grupos g ON eg.GrupoID = g.GrupoID 
+                    WHERE eg.UsuarioID = m.UsuarioID) AS Grupos
+            FROM Miembros m
+            WHERE m.UsuarioID = ?
+        """
         try:
-            cursor.execute(sql, [UsuarioID])
+            cursor.execute(sql, [usuario_id])
             fila = cursor.fetchone()
             if fila:
-                return MiembroVO(
-                    UsuarioID=fila[0], 
-                    Name=str(fila[1]) if fila[1] else None, 
-                    Surname=str(fila[2]) if fila[2] else None, 
-                    DNI=str(fila[3]) if fila[3] else None, 
-                    Email=str(fila[4]) if fila[4] else None, 
-                    NombreUsuario=str(fila[5]) if fila[5] else None, 
-                    Rol=str(fila[6]) if fila[6] else None,  
-                    Aceptado=fila[7], 
-                    Telefono=fila[8]
+                from VO.MiembroVO import MiembroVO
+                
+                miembro = MiembroVO(
+                    UsuarioID=fila[0],
+                    DNI=str(fila[1]).strip() if fila[1] else "",
+                    Name=str(fila[2]).strip() if fila[2] else "",
+                    NombreUsuario=str(fila[3]).strip() if fila[3] else "",
+                    Surname=str(fila[4]).strip() if fila[4] else "",
+                    Rol=str(fila[5]).strip() if fila[5] else "MIEMBRO",
+                    Aceptado=fila[6],
+                    Telefono=fila[7],
+                    Email=str(fila[8]).strip() if fila[8] else ""
                 )
+                
+                miembro.Departamento = str(fila[9]).strip() if fila[9] else "Ninguno"
+                miembro.Grupo = str(fila[10]).strip() if fila[10] else "Ninguno"
+                
+                return miembro
             return None
         except Exception as e:
-            print(f"Error al buscar miembro {UsuarioID}: {e}")
+            print(f"Error en MiembroDAO.obtener_miembro_por_id: {e}")
             return None
         finally:
             cursor.close()
 
-    def actualizar(self, miembro: MiembroVO):
-        """UPDATE: Modifica los datos de un miembro existente"""
+    def actualizar_miembro(self, usuario_id, dni, nombre, apellido, telefono, email, rol):
+        """Actualiza estrictamente los datos de la tabla maestra Miembros (7 parámetros)"""
         cursor = self.conexion.cursor()
-        
-        sql = "UPDATE miembros SET Name = ?, Surname = ?, Rol = ?, DNI = ?, NombreUsuario = ?, Aceptado = ?, Telefono = ?, Email = ? WHERE UsuarioID = ?"
+        sql = """
+            UPDATE Miembros 
+            SET DNI = ?, [Name] = ?, Surname = ?, Telefono = ?, Email = ?, Rol = ?
+            WHERE UsuarioID = ?
+        """
         try:
-            
-            cursor.execute(sql, [
-                miembro.Name,
-                miembro.Surname,
-                miembro.Rol,
-                miembro.DNI,
-                miembro.NombreUsuario,
-                miembro.Aceptado,
-                miembro.Telefono,
-                miembro.Email,
-                miembro.UsuarioID  
-            ])
-            return True
+            cursor.execute(sql, [dni, nombre, apellido, telefono, email, rol, usuario_id])
+            self.conexion.commit()
+            return cursor.rowcount > 0
         except Exception as e:
-            print(f"Error al actualizar miembro: {e}")
+            print(f"Error en MiembroDAO.actualizar_miembro: {e}")
             return False
         finally:
             cursor.close()
 
-    def eliminar(self, UsuarioID):
-        """DELETE: Borra un miembro por su ID"""
-        cursor = self.conexion.cursor()
-        sql = "DELETE FROM miembros WHERE UsuarioID = ?"
-        try:
-            cursor.execute(sql, [UsuarioID])
-            return True
-        except Exception as e:
-            print(f"Error al eliminar miembro: {e}")
-            return False
-        finally:
-            cursor.close()
 
     def autenticar(self, usuario, contrasena):
         """Valida las credenciales en LoginUsuario y devuelve (True, MiembroVO) o (False, "Mensaje de error")"""
@@ -189,3 +188,86 @@ class MiembroDAO:
             return []
         finally:
             cursor.close()
+
+    def aceptar_miembro(self, usuario_id):
+        """Cambia el estado de un miembro pendiente a aceptado (Aceptado = 1)"""
+        cursor = self.conexion.cursor()
+        try:
+            cursor.execute("UPDATE Miembros SET Aceptado = 1 WHERE UsuarioID = ?", [usuario_id])
+            self.conexion.commit()
+            return True
+        except Exception as e:
+            print(f"Error en MiembroDAO.aceptar_miembro: {e}")
+            return False
+        finally:
+            cursor.close()
+
+    def eliminar_miembro(self, usuario_id):
+        """Elimina por completo a un miembro (las claves foráneas se encargan del CASCADE)"""
+        cursor = self.conexion.cursor()
+        try:
+            cursor.execute("DELETE FROM Miembros WHERE UsuarioID = ?", [usuario_id])
+            self.conexion.commit()
+            return True
+        except Exception as e:
+            print(f"Error en MiembroDAO.eliminar_miembro: {e}")
+            return False
+        finally:
+            cursor.close()
+
+    def existe_vinculo_departamento(self, usuario_id, nombre_depto):
+        cursor = self.conexion.cursor()
+        sql = """
+            SELECT 1 FROM EstaEnDepartamento ed
+            INNER JOIN Departamentos d ON ed.DepartamentoID = d.Num_Dep
+            WHERE ed.UsuarioID = ? AND d.tipo = ?
+        """
+        cursor.execute(sql, [usuario_id, nombre_depto])
+        res = cursor.fetchone()
+        cursor.close()
+        return res is not None
+
+
+    def existe_vinculo_grupo(self, usuario_id, nombre_grupo):
+        cursor = self.conexion.cursor()
+        sql = """
+            SELECT 1 FROM EstaEnGrupo eg
+            INNER JOIN Grupos g ON eg.GrupoID = g.GrupoID
+            WHERE eg.UsuarioID = ? AND g.Name = ?
+        """
+        cursor.execute(sql, [usuario_id, nombre_grupo])
+        res = cursor.fetchone()
+        cursor.close()
+        return res is not None
+
+    def limpiar_departamentos_usuario(self, usuario_id):
+        cursor = self.conexion.cursor()
+        cursor.execute("DELETE FROM EstaEnDepartamento WHERE UsuarioID = ?", [usuario_id])
+        self.conexion.commit()
+        cursor.close()
+
+    def limpiar_grupos_usuario(self, usuario_id):
+        cursor = self.conexion.cursor()
+        cursor.execute("DELETE FROM EstaEnGrupo WHERE UsuarioID = ?", [usuario_id])
+        self.conexion.commit()
+        cursor.close()
+
+    def vincular_a_departamento(self, usuario_id, nombre_depto):
+        cursor = self.conexion.cursor()
+        sql = """
+            INSERT INTO EstaEnDepartamento (UsuarioID, DepartamentoID, FechaVinculacion)
+            SELECT ?, Num_Dep, GETDATE() FROM Departamentos WHERE tipo = ?
+        """
+        cursor.execute(sql, [usuario_id, nombre_depto])
+        self.conexion.commit()
+        cursor.close()
+
+    def vincular_a_grupo(self, usuario_id, nombre_grupo):
+        cursor = self.conexion.cursor()
+        sql = """
+            INSERT INTO EstaEnGrupo (UsuarioID, GrupoID, FechaIngreso)
+            SELECT ?, GrupoID, GETDATE() FROM Grupos WHERE Name = ?
+        """
+        cursor.execute(sql, [usuario_id, nombre_grupo])
+        self.conexion.commit()
+        cursor.close()
