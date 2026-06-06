@@ -182,7 +182,6 @@ class MenuView(QMainWindow):
 
         self.tarjetas_izquierda.clear()
 
-        # 🛠️ BOTÓN DINÁMICO PARA CREAR NUEVOS GRUPOS (Solo Jefes y Presidentes)
         if hasattr(self, 'es_admin') and self.es_admin:
             self.btn_crear_grupo = QPushButton("+ Crear Nuevo Grupo")
             self.btn_crear_grupo.setCursor(Qt.PointingHandCursor)
@@ -261,7 +260,6 @@ class MenuView(QMainWindow):
             if widget:
                 widget.deleteLater()
 
-        # 🛠️ BOTÓN DINÁMICO PARA ASIGNAR NUEVAS TAREAS (Solo Jefes y Presidentes)
         if self.es_admin:
             self.btn_crear_tarea = QPushButton("+ Asignar Tarea a este Grupo")
             self.btn_crear_tarea.setCursor(Qt.PointingHandCursor)
@@ -401,3 +399,20 @@ class MenuView(QMainWindow):
                         break
             else:
                 QMessageBox.critical(self, "Error en el Proceso", mensaje)
+
+    def refrescar_grupos(self):
+        """
+        Vuelve a consultar los grupos del usuario en la base de datos 
+        y rellama a la función de renderizado para actualizar la interfaz.
+        """
+        if hasattr(self, 'grupo_controller') and self.grupo_controller:
+            nuevos_grupos = self.grupo_controller.obtener_grupos_usuario(
+                self.miembro.UsuarioID, self.miembro.Rol
+            )
+            self.lista_grupos = nuevos_grupos
+            self.cargar_grupos_izquierdos()
+            if self.id_grupo_seleccionado:
+                for tarjeta in self.tarjetas_izquierda:
+                    if int(tarjeta.id_entidad) == int(self.id_grupo_seleccionado):
+                        self.grupo_seleccionado(self.id_grupo_seleccionado, tarjeta)
+                        break

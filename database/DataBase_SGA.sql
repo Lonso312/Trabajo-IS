@@ -122,10 +122,10 @@ CREATE TABLE Sesiones(
 );
 
 CREATE TABLE Grupos(
-	GrupoID INT identity(1,1) not null CONSTRAINT PK_GroupID PRIMARY KEY,
-	Num_miembros INT not null,
-	[Name] varchar(50) not null, 
-	Pin_jefedep INT NULL CONSTRAINT FK_Grupos_Pin_jefedep FOREIGN KEY (Pin_jefedep) REFERENCES Jefes_de_Departamento(Pin_jefedep)
+    GrupoID INT identity(1,1) not null CONSTRAINT PK_GroupID PRIMARY KEY,
+    Num_miembros INT not null DEFAULT 0,
+    [Name] varchar(50) not null, 
+    Pin_jefedep INT NULL CONSTRAINT FK_Grupos_Pin_jefedep FOREIGN KEY (Pin_jefedep) REFERENCES Jefes_de_Departamento(Pin_jefedep)
 );
 
 CREATE TABLE Departamentos(
@@ -347,6 +347,31 @@ CREATE TABLE TieneSesion (
 );
 GO
 
+
+GO
+CREATE TRIGGER TR_ActualizarNumMiembros
+ON EstaEnGrupo
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (SELECT 1 FROM inserted)
+    BEGIN
+        UPDATE Grupos
+        SET Num_miembros = (SELECT COUNT(*) FROM EstaEnGrupo WHERE EstaEnGrupo.GrupoID = Grupos.GrupoID)
+        WHERE GrupoID IN (SELECT DISTINCT GrupoID FROM inserted);
+    END
+
+    IF EXISTS (SELECT 1 FROM deleted)
+    BEGIN
+        UPDATE Grupos
+        SET Num_miembros = (SELECT COUNT(*) FROM EstaEnGrupo WHERE EstaEnGrupo.GrupoID = Grupos.GrupoID)
+        WHERE GrupoID IN (SELECT DISTINCT GrupoID FROM deleted);
+    END
+END;
+GO
+
 -- ============================================================================
 -- 4. POBLACIÓN DE REGISTROS (INSERTS) - CON SANGRE LIMPIA ANTI-ERRORES
 -- ============================================================================
@@ -380,13 +405,16 @@ INSERT INTO Archivos (Tipo, Num_download, Num_view) VALUES
 ('EXCEL', 5, 20);
 
 INSERT INTO Departamentos (tipo) VALUES 
-('Mecanica y Propulsion'),
-('Electronica y Telemetria');
+('Mecanica'),
+('Fabricación'),
+('Aerodinámica'),
+('Redes'),
+('Electronica y Seguridad');
 
-INSERT INTO Grupos (Name, Num_miembros) VALUES 
-('Grupo A - Motor', 33),
-('Grupo B - Chasis', 32),
-('Grupo C - Telemetria', 12);
+INSERT INTO Grupos (Name) VALUES 
+('Grupo A - Motor'),
+('Grupo B - Chasis'),
+('Grupo C - Telemetria');
 
 -- CORRECCIÓN: Nombres de Tareas limpios (sin tildes ni caracteres extraños)
 INSERT INTO Tareas (Name, Descripcion, Fecha_limite) VALUES 

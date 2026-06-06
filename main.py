@@ -54,7 +54,7 @@ class ControladorApp:
                 miembro=miembro_logueado, 
                 lista_grupos=grupos_formateados,
                 callback_cargar_tareas=self.tarea_controller.obtener_tareas_y_sesiones,
-                callback_abrir_gestion=self.usuario_controller.abrir_pantalla_gestion, 
+                callback_abrir_gestion=self.abrir_gestion_miembros_con_refresh, # <-- Apunta al nuevo método
                 callback_logout=self.cerrar_sesion
             )
             # Inyectamos los controladores de creación a la vista de menú para los diálogos emergentes
@@ -71,6 +71,25 @@ class ControladorApp:
         
         self.login_view.txt_password.clear() 
         self.login_view.show()
+
+
+    def abrir_gestion_miembros_con_refresh(self):
+        self.usuario_controller.abrir_pantalla_gestion()
+        from PyQt5.QtWidgets import QApplication
+        from vistas.gestion_miembros_view import GestionMiembrosView
+        
+        for widget in QApplication.topLevelWidgets():
+            if isinstance(widget, GestionMiembrosView):
+                original_callback = widget.callback_actualizar
+                def callback_actualizar_wrapper(*args, **kwargs):
+                    resultado = original_callback(*args, **kwargs)
+                    if self.menu_view:
+                        self.menu_view.refrescar_grupos()
+                        
+                    return resultado
+
+                widget.callback_actualizar = callback_actualizar_wrapper
+                break
 
 
 if __name__ == '__main__':
