@@ -1,5 +1,8 @@
 # archivo: vistas/menu_view.py
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
+from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+                             QLabel, QPushButton, QFrame, QInputDialog, 
+                             QDialog, QFormLayout, QLineEdit, QTextEdit, 
+                             QDialogButtonBox, QMessageBox)
 from PyQt5.QtCore import Qt
 
 # =================================================================
@@ -62,6 +65,11 @@ class MenuView(QMainWindow):
         self.callback_abrir_gestion = callback_abrir_gestion
         self.callback_logout = callback_logout
         
+        # Estas referencias se inyectarán desde main.py tras inicializar la vista
+        self.grupo_controller = None
+        self.tarea_controller = None
+        
+        self.id_grupo_seleccionado = None  # Almacena el ID del grupo activo
         self.tarjetas_izquierda = []  
         self.init_ui()
 
@@ -89,11 +97,12 @@ class MenuView(QMainWindow):
         top_bar.addStretch()  # Empuja los botones al extremo derecho
         
         # ----------------------------------------------------------------------
-        # VALIDACIÓN VISUAL DEL ROL Y BOTÓN DE GESTIÓN
+        # VALIDACIÓN VISUAL DEL ROL Y BOTONES DE GESTIÓN ADMINISTRATIVA
         # ----------------------------------------------------------------------
         rol_limpio_check = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
+        self.es_admin = rol_limpio_check in ["PRESIDENTE", "JEFE DEPARTAMENTO"]
         
-        if rol_limpio_check in ["PRESIDENTE", "JEFE DEPARTAMENTO"]:
+        if rol_limpio_check in ["PRESIDENTE", "SECRETARIO", "TESORERO", "JEFE DEPARTAMENTO"]:
             self.btn_gestionar_miembros = QPushButton("Gestionar Miembros")
             self.btn_gestionar_miembros.setCursor(Qt.PointingHandCursor)
             self.btn_gestionar_miembros.setStyleSheet("""
@@ -114,7 +123,6 @@ class MenuView(QMainWindow):
             self.btn_gestionar_miembros.clicked.connect(self.callback_abrir_gestion)
             top_bar.addWidget(self.btn_gestionar_miembros)
             top_bar.addSpacing(10) 
-        
 
         btn_logout = QPushButton("Cerrar Sesión")
         btn_logout.setCursor(Qt.PointingHandCursor)
@@ -138,11 +146,11 @@ class MenuView(QMainWindow):
         main_layout.addSpacing(15)
 
         # -------------------------------------------------------------
-        # 2. CONTENIDO PRINCIPAL 
+        # 2. CONTENIDO PRINCIPAL (Diseño de paneles izquierdo/derecho)
         # -------------------------------------------------------------
         content_layout = QHBoxLayout()
         
-        # Panel Izquierdo (Módulos / Grupos)
+        # Panel Izquierdo (Contenedor vertical de tarjetas + Botón Crear Grupo)
         self.left_layout = QVBoxLayout()
         self.cargar_grupos_izquierdos()
         content_layout.addLayout(self.left_layout, stretch=2)  
@@ -153,7 +161,7 @@ class MenuView(QMainWindow):
         linea.setStyleSheet("color: #A0A0A0; width: 2px; margin: 0px 15px;")
         content_layout.addWidget(linea)
 
-        # Panel Derecho
+        # Panel Derecho (Contenedor maestro de Tareas)
         right_container = QFrame()
         right_container.setStyleSheet("background-color: #FFFFFF; border: 2px solid #000000; border-radius: 5px;")
         self.right_layout = QVBoxLayout(right_container)
@@ -162,8 +170,11 @@ class MenuView(QMainWindow):
         content_layout.addWidget(right_container, stretch=3)  
         main_layout.addLayout(content_layout)
 
+        # Mostrar mensaje de instrucciones iniciales al cargar la pantalla
+        self.mostrar_mensaje_vacio()
 
     def cargar_grupos_izquierdos(self):
+        """Vuelca dinámicamente las tarjetas reactivas de grupos en el menú izquierdo"""
         while self.left_layout.count():
             item = self.left_layout.takeAt(0)
             if item.widget(): 
@@ -171,6 +182,28 @@ class MenuView(QMainWindow):
 
         self.tarjetas_izquierda.clear()
 
+        # 🛠️ BOTÓN DINÁMICO PARA CREAR NUEVOS GRUPOS (Solo Jefes y Presidentes)
+        if hasattr(self, 'es_admin') and self.es_admin:
+            self.btn_crear_grupo = QPushButton("+ Crear Nuevo Grupo")
+            self.btn_crear_grupo.setCursor(Qt.PointingHandCursor)
+            self.btn_crear_grupo.setStyleSheet("""
+                QPushButton {
+                    background-color: #6B46C1;
+                    border: 2px solid #000000;
+                    border-radius: 5px;
+                    padding: 8px;
+                    font-weight: bold;
+                    color: #FFFFFF;
+                    margin-bottom: 10px;
+                }
+                QPushButton:hover {
+                    background-color: #553C9A;
+                }
+            """)
+            self.btn_crear_grupo.clicked.connect(self.abrir_dialogo_crear_grupo)
+            self.left_layout.addWidget(self.btn_crear_grupo)
+
+        # Iteración de mapeado para las tarjetas de grupos organizacionales
         for i, grupo in enumerate(self.lista_grupos):
             nombre_grupo = str(grupo['nombre'])
             cant_miembros = str(grupo['cantidad_miembros'])
@@ -184,6 +217,11 @@ class MenuView(QMainWindow):
                 callback_click=self.grupo_seleccionado,
                 es_verde=False
             )
+            
+            # Si el grupo que estamos redibujando coincide con el seleccionado previamente, mantén el color verde activo
+            if self.id_grupo_seleccionado and int(grupo['id']) == int(self.id_grupo_seleccionado):
+                tarjeta.marcar_activa(True)
+
             self.left_layout.addWidget(tarjeta)
             self.tarjetas_izquierda.append(tarjeta)
         
@@ -191,6 +229,7 @@ class MenuView(QMainWindow):
 
     def mostrar_mensaje_vacio(self):
         """Limpia el panel derecho e introduce un texto de guía elegante"""
+        self.id_grupo_seleccionado = None
         while self.right_layout.count():
             item = self.right_layout.takeAt(0)
             widget = item.widget()
@@ -203,22 +242,47 @@ class MenuView(QMainWindow):
         self.right_layout.addWidget(lbl_vacio)
 
     def grupo_seleccionado(self, id_grupo, tarjeta_pulsada):
-        """Manejador del Evento Clic: Actualiza colores de selección sin perder textos secundarios"""
+        """Manejador del Evento Clic: Actualiza colores de selección y renderiza las tareas"""
         if id_grupo is None or tarjeta_pulsada is None:
             self.mostrar_mensaje_vacio()
             return
 
+        self.id_grupo_seleccionado = int(id_grupo)
+
+        # Conmutar estilos de las tarjetas izquierdas
         for tarjeta in self.tarjetas_izquierda:
             tarjeta.marcar_activa(activa=False)
-        
         tarjeta_pulsada.marcar_activa(activa=True)
 
+        # Vaciar el panel derecho de tareas antiguas
         while self.right_layout.count():
             item = self.right_layout.takeAt(0)
             widget = item.widget()
             if widget:
                 widget.deleteLater()
 
+        # 🛠️ BOTÓN DINÁMICO PARA ASIGNAR NUEVAS TAREAS (Solo Jefes y Presidentes)
+        if self.es_admin:
+            self.btn_crear_tarea = QPushButton("+ Asignar Tarea a este Grupo")
+            self.btn_crear_tarea.setCursor(Qt.PointingHandCursor)
+            self.btn_crear_tarea.setStyleSheet("""
+                QPushButton {
+                    background-color: #2ECC71;
+                    border: 2px solid #000000;
+                    border-radius: 5px;
+                    padding: 8px;
+                    font-weight: bold;
+                    color: #FFFFFF;
+                    margin-bottom: 12px;
+                }
+                QPushButton:hover {
+                    background-color: #27AE60;
+                }
+            """)
+            self.btn_crear_tarea.clicked.connect(self.abrir_dialogo_crear_tarea)
+            self.right_layout.addWidget(self.btn_crear_tarea)
+
+        # Solicitud de datos limpios a través del controlador
         elementos_derechos = self.callback_cargar_tareas(id_grupo)
 
         for elemento in elementos_derechos:
@@ -258,3 +322,82 @@ class MenuView(QMainWindow):
         layout_tarjeta.addWidget(lbl_desc)
         
         self.right_layout.addWidget(frame)
+
+    # =================================================================
+    # VENTANAS MODALES EMERGENTES PARA LA ASIGNACIÓN DE CONTENIDO
+    # =================================================================
+    def abrir_dialogo_crear_grupo(self):
+        if not self.grupo_controller:
+            QMessageBox.critical(self, "Error de Sistema", "El controlador de grupos no se encuentra vinculado.")
+            return
+
+        nombre, ok = QInputDialog.getText(self, "Nuevo Grupo Organizacional", "Introduce el nombre del grupo:")
+        if ok and nombre.strip():
+            nombre_limpio = str(nombre).strip()
+            
+            exito, mensaje = self.grupo_controller.procesar_crear_grupo(
+                self.miembro.Rol, nombre_limpio, self.miembro.UsuarioID
+            )
+            
+            if exito:
+                QMessageBox.information(self, "Operación Completada", mensaje)
+                self.lista_grupos = self.grupo_controller.obtener_grupos_usuario(
+                    self.miembro.UsuarioID, self.miembro.Rol
+                )
+                self.cargar_grupos_izquierdos()
+            else:
+                QMessageBox.critical(self, "Error de Inserción", mensaje)
+
+    def abrir_dialogo_crear_tarea(self):
+        if not self.tarea_controller:
+            QMessageBox.critical(self, "Error de Sistema", "El controlador de tareas no se encuentra vinculado.")
+            return
+
+        if self.id_grupo_seleccionado is None:
+            QMessageBox.warning(self, "Atención", "Por favor, selecciona primero un grupo de trabajo.")
+            return
+
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle("Asignar Nueva Tarea Colectiva")
+        dialogo.setMinimumWidth(400)
+        layout_modal = QVBoxLayout(dialogo)
+        
+        form = QFormLayout()
+        txt_titulo = QLineEdit()
+        txt_desc = QTextEdit()
+        txt_desc.setPlaceholderText("Introduce de forma detallada las metas de la tarea...")
+
+        txt_fecha = QLineEdit()
+        import datetime
+        txt_fecha.setPlaceholderText("AAAA-MM-DD (Ej: " + datetime.date.today().strftime("%Y-%m-%d") + ")")
+        
+        form.addRow("Título de la Tarea:", txt_titulo)
+        form.addRow("Descripción Extendida:", txt_desc)
+        form.addRow("Fecha Límite (AAAA-MM-DD):", txt_fecha)
+        layout_modal.addLayout(form)
+        
+        botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        botones.accepted.connect(dialogo.accept)
+        botones.rejected.connect(dialogo.reject)
+        layout_modal.addWidget(botones)
+        
+        if dialogo.exec_() == QDialog.Accepted:
+            titulo = str(txt_titulo.text()).strip()
+            descripcion = str(txt_desc.toPlainText()).strip()
+            fecha_limite = str(txt_fecha.text()).strip()
+            
+            if not fecha_limite:
+                fecha_limite = datetime.date.today().strftime("%Y-%m-%d")
+            
+            exito, mensaje = self.tarea_controller.procesar_crear_tarea(
+                self.miembro.Rol, int(self.id_grupo_seleccionado), titulo, descripcion, fecha_limite
+            )
+            
+            if exito:
+                QMessageBox.information(self, "Éxito", mensaje)
+                for tarjeta in self.tarjetas_izquierda:
+                    if int(tarjeta.id_entidad) == int(self.id_grupo_seleccionado):
+                        self.grupo_seleccionado(self.id_grupo_seleccionado, tarjeta)
+                        break
+            else:
+                QMessageBox.critical(self, "Error en el Proceso", mensaje)

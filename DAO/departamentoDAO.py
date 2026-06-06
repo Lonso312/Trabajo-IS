@@ -3,7 +3,6 @@ class DepartamentoDAO:
         self.conexion = conexion_db
 
     def obtener_todos_los_tipos(self):
-        """SELECT: Devuelve una lista de strings con los nombres de los departamentos"""
         cursor = self.conexion.cursor()
         sql = "SELECT tipo FROM Departamentos ORDER BY tipo ASC"
         lista_departamentos = []

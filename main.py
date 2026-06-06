@@ -57,6 +57,9 @@ class ControladorApp:
                 callback_abrir_gestion=self.usuario_controller.abrir_pantalla_gestion, 
                 callback_logout=self.cerrar_sesion
             )
+            # Inyectamos los controladores de creación a la vista de menú para los diálogos emergentes
+            self.menu_view.grupo_controller = self.grupo_controller
+            self.menu_view.tarea_controller = self.tarea_controller
             self.menu_view.show()
         else:
             self.login_view.mostrar_error(resultado)

@@ -78,7 +78,6 @@ class TareaDAO:
             cursor.close()
 
     def obtener_sesiones_formateadas(self, id_grupo):
-        """Trae las sesiones de trabajo de un grupo estructuradas para el panel visual"""
         cursor = self.conexion.cursor()
         sql = """
             SELECT s.Name, s.Ubicacion, ts.AsistenciaObligatoria
@@ -102,4 +101,44 @@ class TareaDAO:
             print(f"Error en TareaDAO.obtener_sesiones_formateadas: {e}")
             return []
         finally:
+            cursor.close()
+
+    def crear_tarea_en_grupo(self, grupo_id, titulo_tarea, descripcion="", fecha_limite=""):
+        cursor = self.conexion.cursor()
+
+        if not fecha_limite:
+            import datetime
+            fecha_limite = datetime.date.today().strftime("%Y%mdd")
+        else:
+            fecha_limite = fecha_limite.replace("-", "").replace("/", "").replace(" ", "").strip()
+            if len(fecha_limite) != 8:
+                import datetime
+                fecha_limite = datetime.date.today().strftime("%Y%mdd")
+        
+        sql_tarea = "INSERT INTO Tareas (Name, Descripcion, Fecha_limite) VALUES (?, ?, ?)"
+        sql_vinculo = "INSERT INTO TieneTarea (GrupoID, TareaID, EstadoTarea) VALUES (?, ?, 'Pendiente')"
+        
+        estado_autocommit_original = self.conexion.jconn.getAutoCommit()
+        
+        try:
+            self.conexion.jconn.setAutoCommit(False)
+            cursor.execute(sql_tarea, [str(titulo_tarea).strip(), str(descripcion).strip(), str(fecha_limite)])
+            cursor.execute(sql_vinculo, [int(grupo_id), str(titulo_tarea).strip()])
+            
+            self.conexion.commit()
+            return True
+            
+        except Exception as e:
+            print(f"Error crítico en TareaDAO.crear_tarea_en_grupo: {e}")
+            try:
+                self.conexion.rollback()
+            except Exception:
+                pass
+            return False
+            
+        finally:
+            try:
+                self.conexion.jconn.setAutoCommit(estado_autocommit_original)
+            except Exception:
+                pass
             cursor.close()

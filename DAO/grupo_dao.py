@@ -67,3 +67,17 @@ class GrupoDAO:
             return []
         finally:
             cursor.close()
+
+    def crear_grupo(self, nombre_grupo):
+        """Inserta un nuevo grupo en la tabla Grupos"""
+        cursor = self.conexion.cursor()
+        sql = "INSERT INTO Grupos (Name, Num_miembros) VALUES (?, 0)"
+        try:
+            cursor.execute(sql, [str(nombre_grupo).strip()])
+            self.conexion.commit()
+            return True
+        except Exception as e:
+            print(f"Error en GrupoDAO.crear_grupo: {e}")
+            return False
+        finally:
+            cursor.close()

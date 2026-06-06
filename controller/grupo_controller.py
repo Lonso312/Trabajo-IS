@@ -1,8 +1,20 @@
 class GrupoController:
     def __init__(self, grupo_dao):
-        """Recibe el GrupoDAO para poder interactuar con los datos de los grupos"""
         self.grupo_dao = grupo_dao
+        self.menu_view = None 
 
     def obtener_grupos_usuario(self, usuario_id, rol):
-        
         return self.grupo_dao.obtener_grupos_segun_rol(usuario_id, rol)
+
+    def procesar_crear_grupo(self, rol_usuario, nombre_grupo, usuario_id):
+        rol = str(rol_usuario).strip().upper()
+        if rol not in ["PRESIDENTE", "JEFE DEPARTAMENTO"]:
+            return False, "No tienes permisos de administración para crear grupos."
+            
+        if not nombre_grupo.strip():
+            return False, "El nombre del grupo no puede estar vacío."
+
+        exito = self.grupo_dao.crear_grupo(nombre_grupo)
+        if exito:
+            return True, "Grupo creado con éxito."
+        return False, "Error al insertar el grupo en la base de datos (puede que ya exista)."
