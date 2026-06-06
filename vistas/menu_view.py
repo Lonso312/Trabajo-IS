@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt
 # UN RECUADRO CLICABLE (PANEL IZQUIERDO)
 # =================================================================
 class TarjetaClicable(QFrame):
-    def __init__(self, id_entidad, titulo, sub_1, sub_2, callback_click, es_verde=False, parent=None):
+    def __init__(self, id_entidad, titulo, sub_1, callback_click, es_verde=False, parent=None):
         super().__init__(parent)
         self.id_entidad = id_entidad
         self.callback_click = callback_click
@@ -32,13 +32,9 @@ class TarjetaClicable(QFrame):
         self.lbl_sub1.setStyleSheet("font-size: 12px; border: none; background: transparent; color: inherit;")
         self.lbl_sub1.setAlignment(Qt.AlignRight)
         
-        self.lbl_sub2 = QLabel(str(sub_2))
-        self.lbl_sub2.setStyleSheet("font-size: 11px; border: none; background: transparent; color: inherit;")
-        self.lbl_sub2.setAlignment(Qt.AlignRight)
-        
         layout.addWidget(self.lbl_titulo)
         layout.addWidget(self.lbl_sub1)
-        layout.addWidget(self.lbl_sub2)
+        
 
     def mousePressEvent(self, event):
         """Detecta el clic del ratón y dispara el callback original"""
@@ -206,13 +202,12 @@ class MenuView(QMainWindow):
         for i, grupo in enumerate(self.lista_grupos):
             nombre_grupo = str(grupo['nombre'])
             cant_miembros = str(grupo['cantidad_miembros'])
-            fecha_limite = str(grupo['fecha_limite'])
+            
             
             tarjeta = TarjetaClicable(
                 id_entidad=grupo['id'],
                 titulo=nombre_grupo,
                 sub_1=f"Miembros: {cant_miembros}",
-                sub_2=f"Límite global: {fecha_limite}",
                 callback_click=self.grupo_seleccionado,
                 es_verde=False
             )
@@ -329,7 +324,12 @@ class MenuView(QMainWindow):
             QMessageBox.critical(self, "Error de Sistema", "El controlador de grupos no se encuentra vinculado.")
             return
 
-        nombre, ok = QInputDialog.getText(self, "Nuevo Grupo Organizacional", "Introduce el nombre del grupo:")
+        nombre, ok = QInputDialog.getText(
+            self, 
+            "Nuevo Grupo Organizacional", 
+            "Introduce el nombre del grupo:",
+            flags=self.windowFlags() & ~Qt.WindowContextHelpButtonHint
+        )
         if ok and nombre.strip():
             nombre_limpio = str(nombre).strip()
             

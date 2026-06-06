@@ -1,10 +1,11 @@
 # archivo: vistas/formulario_editar_vista.py
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QComboBox, QDialogButtonBox, QCheckBox, QScrollArea, QWidget
-
+from PyQt5.QtCore import Qt
 class FormularioEditarDialog(QDialog):
     def __init__(self, parent, miembro_vo, lista_departamentos, lista_grupos):
         super().__init__(parent)
         self.setWindowTitle("Editar Miembro Administrativo")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setMinimumWidth(450)
         self.setMinimumHeight(550)
         
