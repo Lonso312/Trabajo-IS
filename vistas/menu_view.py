@@ -93,7 +93,7 @@ class MenuView(QMainWindow):
         # ----------------------------------------------------------------------
         rol_limpio_check = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
         
-        if rol_limpio_check in ["PRESIDENTE", "JEFE DE DEPARTAMENTO"]:
+        if rol_limpio_check in ["PRESIDENTE", "JEFE DEPARTAMENTO"]:
             self.btn_gestionar_miembros = QPushButton("Gestionar Miembros")
             self.btn_gestionar_miembros.setCursor(Qt.PointingHandCursor)
             self.btn_gestionar_miembros.setStyleSheet("""
