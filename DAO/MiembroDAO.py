@@ -145,3 +145,47 @@ class MiembroDAO:
             return False, "Ocurrió un error interno al conectar con el servidor."
         finally:
             cursor.close()
+
+    def obtener_miembros_para_gestion(self, departamento=None):
+        """Trae los miembros de la BD adaptado al esquema real de SGA_Database"""
+        cursor = self.conexion.cursor()
+        lista_resultados = []
+        
+        try:
+            if not departamento or departamento == "Todos":
+                sql = """
+                    SELECT UsuarioID, [Name], Surname, Rol, Email 
+                    FROM Miembros
+                """
+                cursor.execute(sql)
+                
+            else:
+                sql = """
+                    SELECT m.UsuarioID, m.[Name], m.Surname, m.Rol, m.Email
+                    FROM Miembros m
+                    INNER JOIN EstaEnDepartamento ed ON m.UsuarioID = ed.UsuarioID
+                    INNER JOIN Departamentos d ON ed.DepartamentoID = d.Num_Dep
+                    WHERE d.tipo = ?
+                """
+                cursor.execute(sql, [departamento])
+                
+            filas = cursor.fetchall()
+
+            for fila in filas:
+                nombre = str(fila[1]).strip()
+                apellido = str(fila[2]).strip()
+                
+                lista_resultados.append({
+                    "id": fila[0],
+                    "nombre_completo": f"{nombre} {apellido}",
+                    "rol": str(fila[3]).strip(),
+                    "email": str(fila[4]).strip()
+                })
+                
+            return lista_resultados
+
+        except Exception as e:
+            print(f"Error en MiembroDAO.obtener_miembros_para_gestion: {e}")
+            return []
+        finally:
+            cursor.close()

@@ -11,7 +11,6 @@ class TarjetaClicable(QFrame):
         self.id_entidad = id_entidad
         self.callback_click = callback_click
         
-        
         self.estilo_blanco = "QFrame { background-color: #FFFFFF; border: 2px solid #000000; color: #000000; border-radius: 5px; }"
         self.estilo_verde = "QFrame { background-color: #2ECC71; border: 3px solid #000000; color: #FFFFFF; border-radius: 5px; }"
         
@@ -22,7 +21,6 @@ class TarjetaClicable(QFrame):
             
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 10, 15, 10)
-        
         
         self.lbl_titulo = QLabel(str(titulo))
         self.lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; border: none; background: transparent; color: inherit;")
@@ -56,11 +54,12 @@ class TarjetaClicable(QFrame):
 # VENTANA PRINCIPAL (PANEL DIVIDIDO)
 # =================================================================
 class MenuView(QMainWindow):
-    def __init__(self, miembro, lista_grupos, callback_cargar_tareas, callback_logout):
+    def __init__(self, miembro, lista_grupos, callback_cargar_tareas, callback_abrir_gestion, callback_logout):
         super().__init__()
         self.miembro = miembro
         self.lista_grupos = lista_grupos  
         self.callback_cargar_tareas = callback_cargar_tareas  
+        self.callback_abrir_gestion = callback_abrir_gestion
         self.callback_logout = callback_logout
         
         self.tarjetas_izquierda = []  
@@ -87,8 +86,36 @@ class MenuView(QMainWindow):
         lbl_usuario.setStyleSheet("font-size: 15px; font-weight: bold; color: #333333;")
         top_bar.addWidget(lbl_usuario)
         
-        top_bar.addStretch()  # Empuja el botón al extremo derecho
+        top_bar.addStretch()  # Empuja los botones al extremo derecho
         
+        # ----------------------------------------------------------------------
+        # VALIDACIÓN VISUAL DEL ROL Y BOTÓN DE GESTIÓN
+        # ----------------------------------------------------------------------
+        rol_limpio_check = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
+        
+        if rol_limpio_check in ["PRESIDENTE", "JEFE DE DEPARTAMENTO"]:
+            self.btn_gestionar_miembros = QPushButton("Gestionar Miembros")
+            self.btn_gestionar_miembros.setCursor(Qt.PointingHandCursor)
+            self.btn_gestionar_miembros.setStyleSheet("""
+                QPushButton {
+                    background-color: #FFFFFF;
+                    border: 2px solid #6B46C1;
+                    border-radius: 10px;
+                    padding: 5px 15px;
+                    font-weight: bold;
+                    color: #6B46C1;
+                }
+                QPushButton:hover {
+                    background-color: #FAF5FF;
+                    border-color: #553C9A;
+                    color: #553C9A;
+                }
+            """)
+            self.btn_gestionar_miembros.clicked.connect(self.callback_abrir_gestion)
+            top_bar.addWidget(self.btn_gestionar_miembros)
+            top_bar.addSpacing(10) 
+        
+
         btn_logout = QPushButton("Cerrar Sesión")
         btn_logout.setCursor(Qt.PointingHandCursor)
         btn_logout.setStyleSheet("""
@@ -106,6 +133,7 @@ class MenuView(QMainWindow):
         """)
         btn_logout.clicked.connect(self.callback_logout)
         top_bar.addWidget(btn_logout)
+        
         main_layout.addLayout(top_bar)
         main_layout.addSpacing(15)
 
@@ -144,7 +172,6 @@ class MenuView(QMainWindow):
         self.tarjetas_izquierda.clear()
 
         for i, grupo in enumerate(self.lista_grupos):
-            
             nombre_grupo = str(grupo['nombre'])
             cant_miembros = str(grupo['cantidad_miembros'])
             fecha_limite = str(grupo['fecha_limite'])
@@ -181,23 +208,19 @@ class MenuView(QMainWindow):
             self.mostrar_mensaje_vacio()
             return
 
-        # 1. Cambiar color de forma segura usando el método de la tarjeta
         for tarjeta in self.tarjetas_izquierda:
             tarjeta.marcar_activa(activa=False)
         
         tarjeta_pulsada.marcar_activa(activa=True)
 
-        # 2. Limpieza total de todo lo que haya en el panel derecho
         while self.right_layout.count():
             item = self.right_layout.takeAt(0)
             widget = item.widget()
             if widget:
                 widget.deleteLater()
 
-        # 3. Solicitar la lista unificada combinada al controlador (main.py)
         elementos_derechos = self.callback_cargar_tareas(id_grupo)
 
-        # 4. Dibujar dinámicamente cada elemento en la interfaz
         for elemento in elementos_derechos:
             self.crear_tarjeta_derecha(
                 titulo=elemento['titulo'], 
@@ -214,7 +237,6 @@ class MenuView(QMainWindow):
         
         layout_tarjeta = QVBoxLayout(frame)
         layout_tarjeta.setContentsMargins(15, 12, 15, 12)
-        
         
         fila_superior = QHBoxLayout()
         
