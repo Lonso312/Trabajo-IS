@@ -10,7 +10,7 @@ class BienesController:
 
     def abrir_pantalla_bienes(self):
         # Control estricto de accesos según la jerarquía solicitada
-        if self.usuario_actual.Rol not in ['PRESIDENTE', 'TESORERO']:
+        if self.usuario_actual.Rol not in ['PRESIDENTE', 'TESORERO', 'JEFE DEPARTAMENTO']:
             QMessageBox.critical(None, "Acceso Denegado", "Solo Tesoreros o Presidentes pueden gestionar los bienes.")
             return
     
