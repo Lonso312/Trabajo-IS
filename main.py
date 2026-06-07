@@ -80,6 +80,11 @@ class ControladorApp:
                 self.miembro
             )
 
+            from DAO.ArchivosDAO import ArchivosDAO
+            from controller.archivos_controller import ArchivosController
+            self.archivos_dao = ArchivosDAO(self.conexion)
+            self.archivos_controller = ArchivosController(self.archivos_dao, self.miembro)
+
             self.menu_view = MenuView(
                 miembro=self.miembro,
                 lista_grupos=grupos_formateados,
@@ -95,6 +100,8 @@ class ControladorApp:
             self.menu_view.factura_dao = self.factura_dao
             self.menu_view.solicitud_dao = self.solicitud_dao
             self.menu_view.secretaria_dao = self.secretaria_dao
+            self.menu_view.archivos_controller = self.archivos_controller
+
 
             self.menu_view.show()
 
@@ -116,6 +123,8 @@ class ControladorApp:
             self.usuario_controller.usuario_logueado = self.miembro
 
         self.usuario_controller.abrir_pantalla_gestion()
+
+    
 
 
 if __name__ == '__main__':

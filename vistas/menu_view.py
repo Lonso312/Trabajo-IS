@@ -52,6 +52,7 @@ class MenuView(QMainWindow):
         self.grupo_controller = None
         self.tarea_controller = None
         self.bienes_controller = None  
+        self.archivos_controller = None 
         
         self.id_grupo_seleccionado = None  
         self.seccion_facturas_activa = False
@@ -118,6 +119,13 @@ class MenuView(QMainWindow):
             btn_bienes.clicked.connect(self.abrir_modulo_bienes)
             top_bar.addWidget(btn_bienes)
             top_bar.addSpacing(10)
+
+        btn_archivos = QPushButton("Archivos")
+        btn_archivos.setCursor(Qt.PointingHandCursor)
+        btn_archivos.setStyleSheet("QPushButton { background-color: #FFFFFF; border: 2px solid #34495E; border-radius: 10px; padding: 5px 15px; font-weight: bold; color: #34495E; } QPushButton:hover { background-color: #EAEDED; border-color: #2C3E50; color: #2C3E50; }")
+        btn_archivos.clicked.connect(self.abrir_modulo_archivos)
+        top_bar.addWidget(btn_archivos)
+        top_bar.addSpacing(10)
 
         btn_logout = QPushButton("Cerrar Sesión")
         btn_logout.setCursor(Qt.PointingHandCursor)
@@ -761,3 +769,9 @@ class MenuView(QMainWindow):
     def abrir_modulo_bienes(self):
         if hasattr(self, 'bienes_controller') and self.bienes_controller:
             self.bienes_controller.abrir_pantalla_bienes()
+
+    def abrir_modulo_archivos(self):
+        if hasattr(self, 'archivos_controller') and self.archivos_controller:
+            self.archivos_controller.abrir_pantalla_archivos() 
+        else:
+            QMessageBox.information(self, "Módulo Documental", "Accediendo al repositorio centralizado de archivos compartidos...")
