@@ -14,7 +14,7 @@ class GestionMiembrosView(QWidget):
         self.callback_aceptar = callback_aceptar
         self.callback_eliminar = callback_eliminar
         self.callback_actualizar = callback_actualizar
-        self.controller = controller # 
+        self.controller = controller 
         
         self.miembro_actual_vo = None 
         self.init_ui()
@@ -232,7 +232,7 @@ class GestionMiembrosView(QWidget):
         self.layout_derecho.addWidget(btn_editar)
         
         btn_eliminar = QPushButton("Eliminar Miembro")
-        if str(miembro_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador == "JEFE DEPARTAMENTO":
+        if str(miembro_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador in ["JEFE DEPARTAMENTO","TESORERO","SECRETARIO"]:
             btn_eliminar.setEnabled(False) 
             btn_eliminar.setStyleSheet(style_botones + "QPushButton { background-color: #BDC3C7; color: #7F8C8D; border: 2px solid #7F8C8D; }")
             btn_eliminar.setToolTip("No tienes permisos para eliminar al Presidente del sistema.")
@@ -268,8 +268,8 @@ class GestionMiembrosView(QWidget):
     def confirmar_eliminacion(self, usuario_id):
         rol_operador = self._obtener_rol_operador()
             
-        if self.miembro_actual_vo and str(self.miembro_actual_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador == "JEFE DEPARTAMENTO":
-            QMessageBox.critical(self, "Acceso Denegado", "Operación cancelada: Un Jefe de Departamento no puede eliminar al Presidente.")
+        if self.miembro_actual_vo and str(self.miembro_actual_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador in ["JEFE DEPARTAMENTO","TESORERO","SECRETARIO"]:
+            QMessageBox.critical(self, "Acceso Denegado", "Operación cancelada: No puedes eliminar al Presidente.")
             return
 
         msg = QMessageBox.question(self, "Confirmar Eliminación", 

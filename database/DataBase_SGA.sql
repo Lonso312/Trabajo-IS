@@ -4,6 +4,9 @@ GO
 -- ============================================================================
 -- 1. CONTROL DE ELIMINACIÓN PREVIA (DROP TABLES INVERSO)
 -- ============================================================================
+DROP TRIGGER IF EXISTS TR_ActualizarNumMiembros;
+GO
+
 DROP TABLE IF EXISTS SolicitudesMateriales;
 DROP TABLE IF EXISTS Organiza_Bien;
 DROP TABLE IF EXISTS Gestion_CuentaBanco;
@@ -33,7 +36,7 @@ DROP TABLE IF EXISTS Grupos;
 DROP TABLE IF EXISTS Departamentos;
 DROP TABLE IF EXISTS Facturas;
 DROP TABLE IF EXISTS Actas;
-DROP TABLE IF EXISTS Reuniones;
+DROP TABLE IF EXISTS Reuniones;  -- Corregido el nombre aquí también
 DROP TABLE IF EXISTS Contratos;
 DROP TABLE IF EXISTS Cuenta_Banco;
 DROP TABLE IF EXISTS Archivos;
@@ -155,10 +158,11 @@ CREATE TABLE Actas(
 	fecha date not null
 );
 
-CREATE TABLE Reuniones(
-	ReunionID INT identity(1,1) not null CONSTRAINT PK_ReunionID PRIMARY KEY,
-	fecha datetime not null,
-	tipo varchar(50) not null
+-- CORRECCIÓN: Se cambió el nombre de 'SecretariaReuniones' a 'Reuniones' para que coincida con las claves foráneas e inserts posteriores.
+CREATE TABLE Reuniones (
+    ReunionID INT IDENTITY(1,1) PRIMARY KEY,
+    fecha DATETIME not null,
+    tipo VARCHAR(50) not null
 );
 
 CREATE TABLE Contratos(
@@ -254,14 +258,14 @@ CREATE TABLE Crea_Reunion (
     ReunionID INT NOT NULL,
     CONSTRAINT PK_Crea_Reunion PRIMARY KEY (SecretarioID, ReunionID),
     CONSTRAINT FK_CR_Secretario FOREIGN KEY (SecretarioID) REFERENCES Secretarios(SecretarioID),
-    CONSTRAINT FK_CR_Reunion FOREIGN KEY (ReunionID) REFERENCES Reuniones(ReunionID)
+    CONSTRAINT FK_CR_Reunion FOREIGN KEY (ReunionID) REFERENCES Reuniones(ReunionID) -- Ahora sí encuentra 'Reuniones' arriba
 );
 
 CREATE TABLE Gestion_SecretarioContrato (
     SecretarioID INT NOT NULL,
     ContratoID INT NOT NULL,
     CONSTRAINT PK_Gestion_SecretarioContrato PRIMARY KEY (SecretarioID, ContratoID),
-    CONSTRAINT FK_GSC_Secretario FOREIGN KEY (SecretarioID) REFERENCES Secretarios(SecretarioID),
+    CONSTRAINT FK_GSC_Secretario KEY (SecretarioID) REFERENCES Secretarios(SecretarioID),
     CONSTRAINT FK_GSC_Contrato FOREIGN KEY (ContratoID) REFERENCES Contratos(ContratoID)
 );
 
@@ -358,8 +362,7 @@ CREATE TABLE TieneSesion (
 );
 GO
 
-
-GO
+-- CORRECCIÓN: El Trigger se sitúa al final del bloque estructural para garantizar que 'EstaEnGrupo' y 'Grupos' ya existan.
 CREATE TRIGGER TR_ActualizarNumMiembros
 ON EstaEnGrupo
 AFTER INSERT, UPDATE, DELETE
@@ -384,10 +387,8 @@ END;
 GO
 
 -- ============================================================================
--- 4. POBLACIÓN DE REGISTROS (INSERTS) - CON SANGRE LIMPIA ANTI-ERRORES
+-- 4. POBLACIÓN DE REGISTROS (INSERTS)
 -- ============================================================================
-
--- Forzamos la interpretación global del formato de fecha de inserción
 SET DATEFORMAT ymd;
 
 INSERT INTO Miembros (DNI, [Name], NombreUsuario, Surname, Rol, Telefono, Email, Aceptado) VALUES 
@@ -427,12 +428,11 @@ INSERT INTO Grupos (Name) VALUES
 ('Grupo B - Chasis'),
 ('Grupo C - Telemetria');
 
--- CORRECCIÓN: Nombres de Tareas limpios (sin tildes ni caracteres extraños)
 INSERT INTO Tareas (Name, Descripcion, Fecha_limite) VALUES 
 ('Gestion del carburador', 'Rediseniar la entrada de aire del motor principal aplicando dinamica de fluidos.', '2026-06-15 00:00:00'),
 ('Decisiones estructurales', 'Validar los puntos de torsion mecanica y soldaduras del eje trasero.', '2026-06-18 00:00:00'),
 ('Configuracion de antenas', 'Solucionar la perdida de paquetes en el modulo de transmision de 2.4GHz.', '2026-06-22 00:00:00'),
-('Firma de balance anual', 'Revision obligatoria del estado de cuentas y facturas del segundo trimestre.', '2026-06-10 00:00:00');
+('Firma de balance anual', 'Revision obligatoria del estado de cuentas y facturas del second trimestre.', '2026-06-10 00:00:00');
 
 INSERT INTO Sesiones (Name, Ubicacion) VALUES 
 ('Sesion Tecnica Especial de Motores', 'Laboratorio de Motores A-102'),
@@ -465,7 +465,6 @@ INSERT INTO Bienes (tipo, precio, cantidad) VALUES
 INSERT INTO Gestion_MiemArch (UsuarioID, ArchivoID) VALUES (5, 1), (6, 2);
 INSERT INTO Gestion_JefeMiembro (JefeDepID, UsuarioID) VALUES (3, 5), (3, 6);
 
--- CORRECCIÓN: Relaciones adaptadas a los textos limpios
 INSERT INTO Crea_Tarea (JefeDepID, TareaName) VALUES 
 (3, 'Gestion del carburador'), 
 (3, 'Decisiones estructurales');
@@ -494,7 +493,6 @@ INSERT INTO EstaEnDepartamento (UsuarioID, DepartamentoID) VALUES
 INSERT INTO EstaEnGrupo (UsuarioID, GrupoID) VALUES 
 (3, 1), (6, 1), (1, 1), (6, 2), (2, 3);
 
--- CORRECCIÓN: Vinculaciones de relaciones seguras sin caracteres especiales
 INSERT INTO TieneTarea (GrupoID, TareaID, EstadoTarea) VALUES 
 (1, 'Gestion del carburador', 'En Progreso'), 
 (1, 'Decisiones estructurales', 'Pendiente'),    
@@ -505,8 +503,7 @@ INSERT INTO TieneSesion (GrupoID, SesionID, AsistenciaObligatoria) VALUES
 (1, 'Sesion Tecnica Especial de Motores', 1), 
 (2, 'Sesion Tecnica Especial de Motores', 0), 
 (3, 'Asamblea de Presupuesto General', 1);
-
-
+GO
 
 -- ============================================================================
 -- 5. CONSULTAS DE COMPROBACIÓN COMPLETAS

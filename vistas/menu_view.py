@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt5.QtCore import Qt
 from utils.event_bus import EventBus
 
-
 class TarjetaClicable(QFrame):
     def __init__(self, id_entidad, titulo, sub_1, callback_click, es_verde=False, parent=None):
         super().__init__(parent)
@@ -55,10 +54,11 @@ class MenuView(QMainWindow):
         self.id_grupo_seleccionado = None  
         self.seccion_facturas_activa = False
         self.seccion_solicitudes_activa = False
+        self.seccion_secretaria_activa = False # 👈 Nuevo estado
         self.tarjetas_izquierda = []  
         
-        self.init_ui()
         EventBus.get_instance().grupos_actualizados.connect(self.refrescar_grupos)
+        self.init_ui()
 
     def init_ui(self):
         self.setWindowTitle(f"SGA - Sistema de Gestión ({str(self.miembro.Rol)})")
@@ -183,7 +183,7 @@ class MenuView(QMainWindow):
             self.left_layout.addWidget(btn_crear_grupo)
 
         for grupo in self.lista_grupos:
-            es_activa = (self.id_grupo_seleccionado == grupo['id'] and not self.seccion_facturas_activa and not self.seccion_solicitudes_activa)
+            es_activa = (self.id_grupo_seleccionado == grupo['id'] and not self.seccion_facturas_activa and not self.seccion_solicitudes_activa and not self.seccion_secretaria_activa)
             tarjeta = TarjetaClicable(
                 id_entidad=grupo['id'],
                 titulo=grupo['nombre'],
@@ -193,6 +193,8 @@ class MenuView(QMainWindow):
             )
             self.left_layout.addWidget(tarjeta)
             self.tarjetas_izquierda.append(tarjeta)
+        
+        rol_limpio = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
         
         if self.es_tesorero:
             self.left_layout.addSpacing(20)
@@ -206,6 +208,16 @@ class MenuView(QMainWindow):
             self.tarjeta_solicitudes = TarjetaClicable(-100, "Validar Materiales", "Peticiones de Jefes", self.abrir_seccion_solicitudes, self.seccion_solicitudes_activa)
             self.left_layout.addWidget(self.tarjeta_solicitudes)
 
+        # 📋 NUEVA SECCIÓN: SECRETARÍA
+        if rol_limpio in ["SECRETARIO", "JEFE DEPARTAMENTO", "TESORERO", "PRESIDENTE"]:
+            self.left_layout.addSpacing(20)
+            lbl_seccion_secretaria = QLabel("SECRETARÍA")
+            lbl_seccion_secretaria.setStyleSheet("font-weight: bold; color: #3498DB; font-size: 11px; margin-bottom: 5px;")
+            self.left_layout.addWidget(lbl_seccion_secretaria)
+            
+            self.tarjeta_secretaria = TarjetaClicable(-101, "Reuniones y Actas", "Control de asambleas", self.abrir_seccion_secretaria, self.seccion_secretaria_activa)
+            self.left_layout.addWidget(self.tarjeta_secretaria)
+
         self.left_layout.addStretch()
 
     def desmarcar_todas_las_tarjetas(self):
@@ -214,6 +226,7 @@ class MenuView(QMainWindow):
             tarjeta.marcar_activa(False)
         if hasattr(self, 'tarjeta_facturas'): self.tarjeta_facturas.marcar_activa(False)
         if hasattr(self, 'tarjeta_solicitudes'): self.tarjeta_solicitudes.marcar_activa(False)
+        if hasattr(self, 'tarjeta_secretaria'): self.tarjeta_secretaria.marcar_activa(False)
 
     def limpiar_panel_derecho(self):
         """Elimina todos los widgets del panel derecho dinámicamente"""
@@ -236,13 +249,13 @@ class MenuView(QMainWindow):
         self.id_grupo_seleccionado = id_grupo
         self.seccion_facturas_activa = False
         self.seccion_solicitudes_activa = False 
+        self.seccion_secretaria_activa = False
 
         self.desmarcar_todas_las_tarjetas()
         tarjeta_pulsada.marcar_activa(True)
         self.cargar_panel_derecho_grupo()
 
     def cargar_panel_derecho_grupo(self):
-        """Renderiza las tareas y opciones del grupo seleccionado"""
         self.limpiar_panel_derecho()
 
         if self.es_admin:
@@ -283,11 +296,12 @@ class MenuView(QMainWindow):
         self.right_layout.addWidget(frame)
 
     # =================================================================
-    # GESTIÓN PANEL DERECHO: FACTURAS
+    # GESTIÓN PANEL DERECHO: FACTURAS Y SOLICITUDES
     # =================================================================
     def abrir_seccion_facturas(self, id_entidad, tarjeta_pulsada):
         self.seccion_facturas_activa = True
         self.seccion_solicitudes_activa = False
+        self.seccion_secretaria_activa = False
         self.id_grupo_seleccionado = None
 
         self.desmarcar_todas_las_tarjetas()
@@ -343,12 +357,10 @@ class MenuView(QMainWindow):
         layout.addLayout(fila_inferior)
         self.right_layout.addWidget(frame)
 
-    # =================================================================
-    # GESTIÓN PANEL DERECHO: SOLICITUDES MATERIALES
-    # =================================================================
     def abrir_seccion_solicitudes(self, id_entidad, tarjeta_pulsada):
         self.seccion_facturas_activa = False
         self.seccion_solicitudes_activa = True
+        self.seccion_secretaria_activa = False
         self.id_grupo_seleccionado = None
         
         self.desmarcar_todas_las_tarjetas()
@@ -358,7 +370,7 @@ class MenuView(QMainWindow):
     def cargar_panel_solicitudes(self):
         self.limpiar_panel_derecho()
             
-        lbl_titulo = QLabel("SOLICITUDES DE MATERIALES PENDIENTES")
+        lbl_titulo = QLabel("📦 SOLICITUDES DE MATERIALES PENDIENTES")
         lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; color: #2C3E50; margin-bottom: 10px; border:none;")
         self.right_layout.addWidget(lbl_titulo)
         
@@ -381,7 +393,7 @@ class MenuView(QMainWindow):
         layout.setContentsMargins(15, 12, 15, 12)
         
         fila_superior = QHBoxLayout()
-        lbl_material = QLabel(f"{sol_dict['concepto']} (Cant: {sol_dict['cantidad']})")
+        lbl_material = QLabel(f"📦 {sol_dict['concepto']} (Cant: {sol_dict['cantidad']})")
         lbl_material.setStyleSheet("font-weight: bold; font-size: 13px; border: none;")
         lbl_solicitante = QLabel(f"Por: {sol_dict['solicitante']}")
         lbl_solicitante.setStyleSheet("color: #7F8C8D; font-size: 11px; border: none;")
@@ -412,15 +424,153 @@ class MenuView(QMainWindow):
         self.right_layout.addWidget(frame)
 
     def procesar_respuesta_solicitud(self, solicitud_id, nuevo_estado):
+        # ERROR CORREGIDO: solicitun_id cambiado por solicitud_id
         if hasattr(self, 'solicitud_dao') and self.solicitud_dao:
-            if self.solicitud_dao.cambiar_estado_solicitud(solicitud_id, nuevo_estado):
+            if self.solicitud_dao.cambiar_estado_solicitud(solicitud_id=solicitud_id, nuevo_estado=nuevo_estado):
                 QMessageBox.information(self, "Decisión Registrada", f"La solicitud ha sido marcada como: {nuevo_estado}")
                 self.cargar_panel_solicitudes()
             else:
                 QMessageBox.critical(self, "Error", "No se pudo actualizar el estado de la solicitud.")
 
     # =================================================================
-    # VENTANAS MODALES / DIÁLOGOS
+    # NUEVO MÓDULO: SECRETARÍA Y REUNIONES
+    # =================================================================
+    def abrir_seccion_secretaria(self, id_entidad, tarjeta_pulsada):
+        self.seccion_facturas_activa = False
+        self.seccion_solicitudes_activa = False
+        self.seccion_secretaria_activa = True
+        self.id_grupo_seleccionado = None
+        
+        self.desmarcar_todas_las_tarjetas()
+        tarjeta_pulsada.marcar_activa(True)
+        self.cargar_panel_secretaria()
+
+    def cargar_panel_secretaria(self):
+        self.limpiar_panel_derecho()
+        
+        lbl_titulo = QLabel("MÓDULO DE SECRETARÍA - REUNIONES")
+        lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; color: #2C3E50; margin-bottom: 10px; border:none;")
+        self.right_layout.addWidget(lbl_titulo)
+        
+        rol_limpio = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
+        
+        # Solo el Secretario puede programar nuevas
+        if rol_limpio == "SECRETARIO":
+            btn_crear_reunion = QPushButton("Convocar Nueva Reunión")
+            btn_crear_reunion.setCursor(Qt.PointingHandCursor)
+            btn_crear_reunion.setStyleSheet("QPushButton { background-color: #3498DB; border: 2px solid #000000; border-radius: 5px; padding: 8px; font-weight: bold; color: #FFFFFF; margin-bottom: 12px; } QPushButton:hover { background-color: #2980B9; }")
+            btn_crear_reunion.clicked.connect(self.mostrar_dialogo_crear_reunion)
+            self.right_layout.addWidget(btn_crear_reunion)
+
+        lista_reuniones = self.secretaria_dao.obtener_reuniones_secretaria() if hasattr(self, 'secretaria_dao') and self.secretaria_dao else []
+        
+        if not lista_reuniones:
+            lbl_vacio = QLabel("No hay reuniones programadas actualmente.")
+            lbl_vacio.setStyleSheet("color: #7F8C8D; font-style: italic; border: none; margin-top: 10px;")
+            self.right_layout.addWidget(lbl_vacio)
+        else:
+            for reu in lista_reuniones:
+                self.crear_tarjeta_reunion(reu)
+                
+        self.right_layout.addStretch()
+
+    def crear_tarjeta_reunion(self, reu):
+        frame = QFrame()
+        frame.setStyleSheet("QFrame { background-color: #FFFFFF; border: 2px solid #000000; border-radius: 8px; }")
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(15, 12, 15, 12)
+        
+        fila_superior = QHBoxLayout()
+        lbl_titulo = QLabel(f"{reu['titulo']}")
+        lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; border: none;")
+        
+        lbl_info = QLabel(f"{reu['lugar']} | {reu['fecha']} {reu['hora']}")
+        lbl_info.setStyleSheet("color: #666666; font-size: 12px; border: none;")
+        
+        fila_superior.addWidget(lbl_titulo)
+        fila_superior.addStretch()
+        fila_superior.addWidget(lbl_info)
+        
+        fila_inferior = QHBoxLayout()
+        
+        lbl_estado = QLabel(reu['estado'].upper())
+        if reu['estado'] == 'Programada':
+            lbl_estado.setStyleSheet("color: #3498DB; font-weight: bold; border: none;")
+        elif reu['estado'] == 'Celebrada':
+            lbl_estado.setStyleSheet("color: #2ECC71; font-weight: bold; border: none;")
+        else:
+            lbl_estado.setStyleSheet("color: #E74C3C; font-weight: bold; border: none;")
+        
+        fila_inferior.addWidget(lbl_estado)
+        fila_inferior.addStretch()
+        
+        rol_limpio = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
+        if rol_limpio in ["SECRETARIO", "PRESIDENTE"] and reu['estado'] == 'Programada':
+            btn_celebrada = QPushButton("Celebrada")
+            btn_celebrada.setCursor(Qt.PointingHandCursor)
+            btn_celebrada.setFixedSize(75, 24)
+            btn_celebrada.setStyleSheet("QPushButton { background-color: #2ECC71; color: white; border-radius: 4px; font-weight: bold; border:none; } QPushButton:hover { background-color: #27AE60; }")
+            btn_celebrada.clicked.connect(lambda checked, r_id=reu['id']: self.cambiar_estado_reunion(r_id, "Celebrada"))
+            
+            btn_cancelar = QPushButton("Cancelar")
+            btn_cancelar.setCursor(Qt.PointingHandCursor)
+            btn_cancelar.setFixedSize(75, 24)
+            btn_cancelar.setStyleSheet("QPushButton { background-color: #E74C3C; color: white; border-radius: 4px; font-weight: bold; border:none; } QPushButton:hover { background-color: #C0392B; }")
+            btn_cancelar.clicked.connect(lambda checked, r_id=reu['id']: self.cambiar_estado_reunion(r_id, "Cancelada"))
+            
+            fila_inferior.addWidget(btn_celebrada)
+            fila_inferior.addSpacing(8)
+            fila_inferior.addWidget(btn_cancelar)
+            
+        layout.addLayout(fila_superior)
+        layout.addLayout(fila_inferior)
+        self.right_layout.addWidget(frame)
+
+    def cambiar_estado_reunion(self, reunion_id, nuevo_estado):
+        if hasattr(self, 'secretaria_dao') and self.secretaria_dao:
+            if self.secretaria_dao.actualizar_estado_reunion(reunion_id, nuevo_estado):
+                self.cargar_panel_secretaria()
+
+    def mostrar_dialogo_crear_reunion(self):
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle("Convocar Nueva Reunión")
+        layout = QFormLayout(dialogo)
+        
+        import datetime
+        txt_titulo = QLineEdit()
+        txt_fecha = QLineEdit()
+        txt_fecha.setPlaceholderText(datetime.date.today().strftime("%Y-%m-%d"))
+        txt_hora = QLineEdit()
+        txt_hora.setPlaceholderText("Ej: 10:30")
+        txt_lugar = QLineEdit()
+        
+        layout.addRow("Título/Motivo:", txt_titulo)
+        layout.addRow("Fecha (YYYY-MM-DD):", txt_fecha)
+        layout.addRow("Hora:", txt_hora)
+        layout.addRow("Lugar:", txt_lugar)
+        
+        botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        botones.accepted.connect(dialogo.accept)
+        botones.rejected.connect(dialogo.reject)
+        layout.addWidget(botones)
+        
+        if dialogo.exec_() == QDialog.Accepted:
+            titulo = txt_titulo.text().strip()
+            fecha = txt_fecha.text().strip() or datetime.date.today().strftime("%Y-%m-%d")
+            hora = txt_hora.text().strip()
+            lugar = txt_lugar.text().strip()
+            
+            if titulo and fecha and hora and lugar:
+                if self.secretaria_dao.registrar_reunion(titulo, fecha, hora, lugar):
+                    QMessageBox.information(self, "Éxito", "Reunión convocada correctamente.")
+                    self.cargar_panel_secretaria()
+                else:
+                    QMessageBox.critical(self, "Error", "No se pudo registrar en la base de datos.")
+            else:
+                QMessageBox.warning(self, "Campos Vacíos", "Todos los campos son obligatorios.")
+
+    # =================================================================
+    # VENTANAS MODALES GLOBALES
     # =================================================================
     def mostrar_dialogo_cambiar_pass(self):
         dialogo = QDialog(self)
@@ -461,7 +611,7 @@ class MenuView(QMainWindow):
         txt_cant = QLineEdit()
         
         layout.addRow("Material:", txt_mat)
-        layout.addRow("Precio:", txt_cant)
+        layout.addRow("Cantidad:", txt_cant)
         
         botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         botones.accepted.connect(dialogo.accept)
@@ -482,7 +632,7 @@ class MenuView(QMainWindow):
         if ok and nombre.strip() and self.grupo_controller:
             exito, msg = self.grupo_controller.procesar_crear_grupo(self.miembro.Rol, nombre.strip(), self.miembro.UsuarioID)
             if exito:
-                EventBus.get_instance().grupos_actualizados.emit()
+                self.refrescar_grupos()
             else:
                 QMessageBox.critical(self, "Error", msg)
 
