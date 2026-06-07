@@ -1,10 +1,12 @@
 # archivo: vistas/formulario_editar_vista.py
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QComboBox, QDialogButtonBox, QCheckBox, QScrollArea, QWidget
 from PyQt5.QtCore import Qt
+
 class FormularioEditarDialog(QDialog):
-    def __init__(self, parent, miembro_vo, lista_departamentos, lista_grupos):
+    def __init__(self, parent, miembro_vo, lista_departamentos, lista_grupos, rol_operador="PRESIDENTE"):
         super().__init__(parent)
-        self.setWindowTitle("Editar Miembro Administrativo")
+        self.es_edicion = miembro_vo is not None
+        self.setWindowTitle("Editar Miembro" if self.es_edicion else "Registrar Nuevo Miembro")
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setMinimumWidth(450)
         self.setMinimumHeight(550)
@@ -25,15 +27,24 @@ class FormularioEditarDialog(QDialog):
         self.txt_email = QLineEdit(email_val)
         
         self.combo_rol = QComboBox()
-        self.combo_rol.addItems(["PRESIDENTE", "SECRETARIO", "TESORERO", "JEFE DEPARTAMENTO", "MIEMBRO"])
-        rol_actual = str(getattr(miembro_vo, 'Rol', 'MIEMBRO')).strip().upper()
+        rol_actual = str(getattr(miembro_vo, 'Rol', 'MIEMBRO')).strip().upper() if miembro_vo else "MIEMBRO"
         
-        index_rol = 4
-        for i in range(self.combo_rol.count()):
-            if self.combo_rol.itemText(i).upper() == rol_actual:
-                index_rol = i
-                break
-        self.combo_rol.setCurrentIndex(index_rol)
+        
+        rol_op_limpio = str(rol_operador).strip().upper()
+        
+        if rol_op_limpio == "PRESIDENTE":
+            self.combo_rol.addItems(["PRESIDENTE", "SECRETARIO", "TESORERO", "JEFE DEPARTAMENTO", "MIEMBRO"])
+            
+        elif rol_op_limpio == "JEFE DEPARTAMENTO":
+            if rol_actual == "PRESIDENTE":
+                self.combo_rol.addItems(["PRESIDENTE"])
+                self.combo_rol.setEnabled(False) 
+            else:
+                self.combo_rol.addItems(["SECRETARIO", "TESORERO", "JEFE DEPARTAMENTO", "MIEMBRO"])
+                
+        else:
+            self.combo_rol.addItems([rol_actual])
+            self.combo_rol.setEnabled(False)
 
         # Campos básicos agregados al layout
         form_layout.addRow("DNI / Identificación:", self.txt_dni)

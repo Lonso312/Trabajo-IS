@@ -5,25 +5,33 @@ class MiembroDAO:
     def __init__(self, conexion_db):
         self.conexion = conexion_db
 
-    def crear(self, miembro: MiembroVO):
-        """INSERT: Guarda un nuevo miembro en la base de datos"""
+    def insertar_nuevo_miembro(self, dni, nombre, apellido, telefono, email, rol, depto_id, grupo_id, password="12345"):
+        """
+        Inserta un nuevo miembro en la base de datos de manera explícita.
+        Dependiendo de tu esquema SQL, ajusta los nombres de las columnas.
+        """
         cursor = self.conexion.cursor()
-        sql = "INSERT INTO Miembros (Name, Surname, Rol, DNI, NombreUsuario, Aceptado, Telefono, Email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        sql = """
+            INSERT INTO Miembro (DNI, Name, Surname, Telefono, Email, Rol, DeptoID, GrupoID, Contrasena)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        
         try:
-            
             cursor.execute(sql, [
-                miembro.Name,           
-                miembro.Surname,        
-                miembro.Rol,            
-                miembro.DNI,            
-                miembro.NombreUsuario,  
-                miembro.Aceptado,       
-                miembro.Telefono,       
-                miembro.Email           
+                str(dni).strip(),
+                str(nombre).strip(),
+                str(apellido).strip(),
+                str(telefono).strip(),
+                str(email).strip(),
+                str(rol).strip(),
+                int(depto_id) if depto_id is not None else None,
+                int(grupo_id) if grupo_id is not None else None,
+                str(password) 
             ])
+            self.conexion.commit()
             return True
         except Exception as e:
-            print(f"Error al crear miembro: {e}")
+            print(f"Error en MiembroDAO.insertar_nuevo_miembro: {e}")
             return False
         finally:
             cursor.close()
@@ -271,3 +279,63 @@ class MiembroDAO:
         cursor.execute(sql, [usuario_id, nombre_grupo])
         self.conexion.commit()
         cursor.close()
+
+
+    def insertar_miembro_completo(self, dni, nombre, apellido, telefono, email, rol, usuario_nombre, password="12345"):
+        """
+        Inserta un nuevo miembro respetando el esquema real:
+        1. Inserta en la tabla maestra 'Miembros' y obtiene el ID autogenerado.
+        2. Inserta las credenciales en la tabla 'LoginUsuario'.
+        """
+        cursor = self.conexion.cursor()
+        
+        # SQL 1: Inserción en la tabla maestra (Devolviendo el ID generado)
+        sql_miembro = """
+            INSERT INTO Miembros (DNI, [Name], NombreUsuario, Surname, Rol, Aceptado, Telefono, Email)
+            OUTPUT INSERTED.UsuarioID
+            VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+        """
+        
+        # SQL 2: Inserción de la contraseña en la tabla de login secundaria
+        sql_login = """
+            INSERT INTO LoginUsuario (NombreUsuario, Contrasena)
+            VALUES (?, ?)
+        """
+        
+        try:
+            # 1. Registrar los datos personales en Miembros
+            cursor.execute(sql_miembro, [
+                str(dni).strip(),
+                str(nombre).strip(),
+                str(usuario_nombre).strip(),
+                str(apellido).strip(),
+                str(rol).strip(),
+                int(telefono),
+                str(email).strip()
+            ])
+            
+            fila = cursor.fetchone()
+            if not fila:
+                return None
+            
+            usuario_id = fila[0] # Guardamos el ID único numérico generado
+            
+            # 2. Registrar las credenciales en LoginUsuario usando el mismo NombreUsuario
+            cursor.execute(sql_login, [
+                str(usuario_nombre).strip(),
+                str(password)
+            ])
+            
+            # Confirmamos ambas operaciones en la base de datos simultáneamente
+            self.conexion.commit()
+            return usuario_id
+            
+        except Exception as e:
+            print(f"Error crítico en MiembroDAO.insertar_miembro_completo: {e}")
+            try:
+                self.conexion.rollback() # Cancelamos todo si algo falló
+            except Exception:
+                pass
+            return None
+        finally:
+            cursor.close()

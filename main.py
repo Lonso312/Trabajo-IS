@@ -9,11 +9,11 @@ from database.Conexion import obtener_conexion
 from DAO.MiembroDAO import MiembroDAO
 from DAO.grupo_dao import GrupoDAO
 from DAO.tarea_dao import TareaDAO
-from DAO.departamentoDAO import DepartamentoDAO # Importación ya existente
+from DAO.departamentoDAO import DepartamentoDAO 
 from vistas.login_view import LoginView
 from vistas.menu_view import MenuView
 
-# Importamos ambos controladores arquitectónicos
+
 from controller.tarea_controller import TareaController
 from controller.grupo_controller import GrupoController
 from controller.usuario_controller import UsuarioController 
@@ -37,27 +37,28 @@ class ControladorApp:
 
         self.login_view = LoginView(callback_login=self.validar_login)
         self.menu_view = None
+        self.miembro = None # <-- Declaramos la variable de instancia limpia
         self.login_view.show()
 
     def validar_login(self, usuario, contrasena):
         exito, resultado = self.miembro_dao.autenticar(usuario, contrasena)
         
         if exito:
-            miembro_logueado = resultado
+            self.miembro = resultado
+            
             grupos_formateados = self.grupo_controller.obtener_grupos_usuario(
-                miembro_logueado.UsuarioID, miembro_logueado.Rol
+                self.miembro.UsuarioID, self.miembro.Rol
             )
             
             self.login_view.hide()
             
             self.menu_view = MenuView(
-                miembro=miembro_logueado, 
+                miembro=self.miembro, 
                 lista_grupos=grupos_formateados,
                 callback_cargar_tareas=self.tarea_controller.obtener_tareas_y_sesiones,
-                callback_abrir_gestion=self.abrir_gestion_miembros_con_refresh, # <-- Apunta al nuevo método
+                callback_abrir_gestion=self.abrir_gestion_miembros_con_refresh, 
                 callback_logout=self.cerrar_sesion
             )
-            # Inyectamos los controladores de creación a la vista de menú para los diálogos emergentes
             self.menu_view.grupo_controller = self.grupo_controller
             self.menu_view.tarea_controller = self.tarea_controller
             self.menu_view.show()
@@ -65,15 +66,18 @@ class ControladorApp:
             self.login_view.mostrar_error(resultado)
 
     def cerrar_sesion(self):
-        """Cierra el panel de control y regresa de forma limpia a la pantalla de Login"""
         if self.menu_view:
             self.menu_view.close()
         
+        self.miembro = None 
         self.login_view.txt_password.clear() 
         self.login_view.show()
 
 
     def abrir_gestion_miembros_con_refresh(self):
+        if hasattr(self, 'miembro') and self.miembro is not None:
+            self.usuario_controller.usuario_logueado = self.miembro
+
         self.usuario_controller.abrir_pantalla_gestion()
         from PyQt5.QtWidgets import QApplication
         from vistas.gestion_miembros_view import GestionMiembrosView

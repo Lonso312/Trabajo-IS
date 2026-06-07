@@ -59,7 +59,6 @@ class GrupoDAO:
                     "id": fila[0],
                     "nombre": fila[1],  
                     "cantidad_miembros": str(fila[2]) if fila[2] else "0",
-                    "fecha_limite": "Varios" 
                 })
             return lista_formateada
         except Exception as e:

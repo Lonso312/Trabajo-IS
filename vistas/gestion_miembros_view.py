@@ -4,8 +4,6 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBo
                              QHeaderView, QPushButton, QMessageBox, QDialog)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-
-# Importamos la ventana modal de edición aislada
 from vistas.formulario_editar_vista import FormularioEditarDialog 
 
 class GestionMiembrosView(QWidget):
@@ -39,12 +37,14 @@ class GestionMiembrosView(QWidget):
         lbl_titulo = QLabel("Miembros del Sistema")
         lbl_titulo.setStyleSheet("font-size: 18px; font-weight: bold; color: #333333;")
         fila_filtro.addWidget(lbl_titulo)
+        
+        # Separador para empujar los filtros y el botón hacia la derecha
         fila_filtro.addStretch()
 
         lbl_filtrar = QLabel("Filtrar por Departamento:")
         lbl_filtrar.setStyleSheet("font-size: 13px; font-weight: bold; color: #555555;")
         fila_filtro.addWidget(lbl_filtrar)
-
+        
         self.combo_departamentos = QComboBox()
         self.combo_departamentos.addItem("Todos")
         self.combo_departamentos.setFixedWidth(180)
@@ -63,8 +63,31 @@ class GestionMiembrosView(QWidget):
         self.combo_departamentos.currentTextChanged.connect(self.callback_filtrar)
         fila_filtro.addWidget(self.combo_departamentos)
         
+        fila_filtro.addSpacing(10)
+        self.btn_agregar_miembro = QPushButton("Agregar Miembro")
+        self.btn_agregar_miembro.setCursor(Qt.PointingHandCursor)
+        self.btn_agregar_miembro.setStyleSheet("""
+            QPushButton {
+                background-color: #10B981;
+                border: 2px solid #000000;
+                border-radius: 5px;
+                padding: 5px 15px;
+                font-weight: bold;
+                color: #FFFFFF;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #059669;
+            }
+        """)
+        self.btn_agregar_miembro.clicked.connect(self.abrir_dialogo_agregar_miembro)
+        
+        fila_filtro.addWidget(self.btn_agregar_miembro)
         panel_izquierdo.addLayout(fila_filtro)
         panel_izquierdo.addSpacing(10)
+
+        # Tabla de Miembros
+        self.tabla_miembros = QTableWidget()
 
         # Tabla de Miembros
         self.tabla_miembros = QTableWidget()
@@ -157,13 +180,11 @@ class GestionMiembrosView(QWidget):
         self.layout_derecho.addWidget(lbl_ficha)
 
         def agregar_campo(titulo, valor):
-            # Forzamos conversión a string nativo de Python para curarnos en salud
             texto_valor = str(valor).strip() if valor else "No asignado"
             lbl = QLabel(f"<b>{titulo}:</b> {texto_valor}")
             lbl.setStyleSheet("font-size: 13px; color: #333333; border: none; margin-bottom: 6px;")
             self.layout_derecho.addWidget(lbl)
 
-        # Datos básicos del Miembro extraídos de tu tabla Miembros
         agregar_campo("Nombre completo", f"{miembro_vo.Name} {miembro_vo.Surname}")
         agregar_campo("Usuario", miembro_vo.NombreUsuario)
         agregar_campo("Rol asignado", miembro_vo.Rol)
@@ -174,7 +195,6 @@ class GestionMiembrosView(QWidget):
         agregar_campo("Departamentos Asignados", getattr(miembro_vo, 'Departamento', 'Ninguno'))
         agregar_campo("Grupos de Trabajo", getattr(miembro_vo, 'Grupo', 'Ninguno'))
         
-        # Estado de aceptación
         estado_texto = "Aceptado en el Sistema" if miembro_vo.Aceptado == 1 else "Pendiente de Aceptación"
         lbl_estado = QLabel(f"<b>Estado:</b> {estado_texto}")
         if miembro_vo.Aceptado == 1:
@@ -197,6 +217,9 @@ class GestionMiembrosView(QWidget):
             QPushButton:hover { opacity: 0.9; }
         """
         
+        
+        rol_operador = self._obtener_rol_operador()
+        
         if miembro_vo.Aceptado != 1:
             btn_aceptar = QPushButton("Aceptar en el Sistema")
             btn_aceptar.setStyleSheet(style_botones + "QPushButton { background-color: #2ECC71; }")
@@ -209,21 +232,27 @@ class GestionMiembrosView(QWidget):
         self.layout_derecho.addWidget(btn_editar)
         
         btn_eliminar = QPushButton("Eliminar Miembro")
-        btn_eliminar.setStyleSheet(style_botones + "QPushButton { background-color: #E74C3C; }")
+        if str(miembro_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador == "JEFE DEPARTAMENTO":
+            btn_eliminar.setEnabled(False) 
+            btn_eliminar.setStyleSheet(style_botones + "QPushButton { background-color: #BDC3C7; color: #7F8C8D; border: 2px solid #7F8C8D; }")
+            btn_eliminar.setToolTip("No tienes permisos para eliminar al Presidente del sistema.")
+        else:
+            btn_eliminar.setStyleSheet(style_botones + "QPushButton { background-color: #E74C3C; }")
+            
         btn_eliminar.clicked.connect(lambda: self.confirmar_eliminacion(miembro_vo.UsuarioID))
         self.layout_derecho.addWidget(btn_eliminar)
-
         self.layout_derecho.addStretch()
+        
 
     def abrir_dialogo_edicion(self):
         if self.miembro_actual_vo:
             deptos, grupos = self.controller.obtener_listados_para_edicion(self.miembro_actual_vo)
-            
-            dialogo = FormularioEditarDialog(self, self.miembro_actual_vo, deptos, grupos)
+            rol_operador = self._obtener_rol_operador()
+
+            dialogo = FormularioEditarDialog(self, self.miembro_actual_vo, deptos, grupos, rol_operador)
             
             if dialogo.exec_() == QDialog.Accepted:
                 datos = dialogo.obtener_datos()
-
                 self.callback_actualizar(
                     self.miembro_actual_vo.UsuarioID,
                     datos["dni"], 
@@ -236,8 +265,13 @@ class GestionMiembrosView(QWidget):
                     datos["grupos_lista"]          
                 )
 
-
     def confirmar_eliminacion(self, usuario_id):
+        rol_operador = self._obtener_rol_operador()
+            
+        if self.miembro_actual_vo and str(self.miembro_actual_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador == "JEFE DEPARTAMENTO":
+            QMessageBox.critical(self, "Acceso Denegado", "Operación cancelada: Un Jefe de Departamento no puede eliminar al Presidente.")
+            return
+
         msg = QMessageBox.question(self, "Confirmar Eliminación", 
                                    "¿Estás completamente seguro de eliminar a este miembro?\nEsta acción no se puede deshacer.",
                                    QMessageBox.Yes | QMessageBox.No)
@@ -282,3 +316,50 @@ class GestionMiembrosView(QWidget):
 
     def mostrar_mensaje_error(self, mensaje):
         QMessageBox.critical(self, "Error de Operación", mensaje)
+
+    def abrir_dialogo_agregar_miembro(self):
+        """Abre el formulario en modo creación y delega el guardado al controlador"""
+        lista_deptos = self.controller.obtener_nombres_departamentos() if hasattr(self.controller, 'obtener_nombres_departamentos') else []
+        lista_grupos = self.controller.obtener_nombres_grupos() if hasattr(self.controller, 'obtener_nombres_grupos') else []
+        
+        rol_operador = self._obtener_rol_operador()
+        dialogo = FormularioEditarDialog(self, None, lista_deptos, lista_grupos, rol_operador)
+        
+        if dialogo.exec_() == QDialog.Accepted:
+            datos_formulario = dialogo.obtener_datos()
+            
+            depto_seleccionado = datos_formulario["departamentos_lista"][0] if datos_formulario["departamentos_lista"] else "Ninguno"
+            grupo_seleccionado = datos_formulario["grupos_lista"][0] if datos_formulario["grupos_lista"] else "Ninguno"
+            
+            datos_formulario["depto_id"] = self.controller.obtener_id_depto_por_nombre(depto_seleccionado) if hasattr(self.controller, 'obtener_id_depto_por_nombre') else None
+            datos_formulario["grupo_id"] = self.controller.obtener_id_grupo_por_nombre(grupo_seleccionado) if hasattr(self.controller, 'obtener_id_grupo_por_nombre') else None
+            
+            exito, mensaje = self.controller.procesar_agregar_miembro(rol_operador, datos_formulario)
+            
+            if exito:
+                QMessageBox.information(self, "Operación Exitosa", mensaje)
+                self.callback_filtrar(self.obtener_filtro_actual())
+            else:
+                QMessageBox.critical(self, "Error al Registrar", mensaje)
+
+    def _obtener_rol_operador(self):
+        """Devuelve el rol del usuario autenticado de forma segura o 'MIEMBRO' restrictivo por defecto"""
+        
+        if not hasattr(self, 'controller') or self.controller is None:
+            print("DEBUG: ¡La vista NO tiene acceso a self.controller!")
+            return "MIEMBRO"
+            
+        if not hasattr(self.controller, 'usuario_logueado') or not self.controller.usuario_logueado:
+            print("EBUG: self.controller existe, pero 'usuario_logueado' está vacío o es None.")
+            return "MIEMBRO"
+
+        user = self.controller.usuario_logueado
+
+        # Si el usuario logueado es un diccionario
+        if isinstance(user, dict):
+            rol = str(user.get("rol", user.get("Rol", "MIEMBRO"))).strip().upper()
+            return rol
+            
+        # Si es un objeto/VO
+        rol = str(getattr(user, 'Rol', getattr(user, 'rol', 'MIEMBRO'))).strip().upper()
+        return rol

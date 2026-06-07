@@ -6,6 +6,7 @@ class UsuarioController:
         self.departamento_dao = departamento_dao 
         self.grupo_dao = grupo_dao  
         self.vista_gestion = None
+        self.usuario_logueado = None
 
     def abrir_pantalla_gestion(self, parent_view=None):
         from vistas.gestion_miembros_view import GestionMiembrosView
@@ -98,3 +99,41 @@ class UsuarioController:
             self.cargar_detalle_miembro(usuario_id) 
         else:
             self.vista_gestion.mostrar_mensaje_error("No se pudieron guardar los cambios básicos en la base de datos.")
+
+    def procesar_agregar_miembro(self, rol_operador, datos):
+        """Valida permisos del administrador y procesa el alta del nuevo miembro en ambas tablas"""
+        rol_op = str(rol_operador).strip().upper()
+        if rol_op not in ["PRESIDENTE", "JEFE DEPARTAMENTO"]:
+            return False, "No tienes privilegios para registrar nuevos miembros."
+            
+        # Validaciones de campos obligatorios
+        if not datos.get("dni") or not datos.get("nombre") or not datos.get("apellido"):
+            return False, "El DNI, Nombre y Apellidos son campos obligatorios."
+            
+
+        primera_letra = datos['nombre'][0].lower() if datos['nombre'] else 'u'
+        primer_apellido = datos['apellido'].split()[0].lower() if datos['apellido'] else 'usuario'
+        nombre_usuario = f"{primera_letra}{primer_apellido}"
+        
+
+        usuario_id = self.miembro_dao.insertar_miembro_completo(
+            dni=datos["dni"],
+            nombre=datos["nombre"],
+            apellido=datos["apellido"],
+            telefono=datos["telefono"],
+            email=datos["email"],
+            rol=datos["rol"],
+            usuario_nombre=nombre_usuario,
+            password="12345" 
+        )
+        
+        if usuario_id:
+            for nombre_depto in datos.get("departamentos_lista", []):
+                self.miembro_dao.vincular_a_departamento(usuario_id, nombre_depto)
+                
+            for nombre_grupo in datos.get("grupos_lista", []):
+                self.miembro_dao.vincular_a_grupo(usuario_id, nombre_grupo)
+                
+            return True, f"El miembro '{datos['nombre']} {datos['apellido']}' ha sido pre-registrado con el usuario '{nombre_usuario}'."
+        
+        return False, "No se pudo completar el registro. Verifique que el DNI o el Nombre de Usuario no estén duplicados."
