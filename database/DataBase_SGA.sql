@@ -108,10 +108,13 @@ CREATE TABLE Presidentes(
 );
 
 CREATE TABLE Archivos(
-	ArchivoID INT identity(1,1) not null CONSTRAINT PK_ArchivoID PRIMARY KEY,
-	Tipo varchar(15) not null CONSTRAINT CK_Tipo CHECK (UPPER(Tipo) IN ('PDF', 'EXCEL', 'CSV', 'RAR', 'TXT', 'JPG', 'PNG')),
-	Num_download INT not null,
-	Num_view INT not null
+    ArchivoID INT identity(1,1) not null CONSTRAINT PK_ArchivoID PRIMARY KEY,
+    Nombre nvarchar(100) not null,
+    Tipo varchar(15) not null CONSTRAINT CK_Tipo CHECK (UPPER(Tipo) = 'PDF'),
+    Contenido VARBINARY(MAX) not null,
+    RolPermitido varchar(100) not null,
+    Num_download INT not null DEFAULT 0,
+    Num_view INT not null DEFAULT 0
 );
 
 CREATE TABLE Tareas(
@@ -265,7 +268,7 @@ CREATE TABLE Gestion_SecretarioContrato (
     SecretarioID INT NOT NULL,
     ContratoID INT NOT NULL,
     CONSTRAINT PK_Gestion_SecretarioContrato PRIMARY KEY (SecretarioID, ContratoID),
-    CONSTRAINT FK_GSC_Secretario KEY (SecretarioID) REFERENCES Secretarios(SecretarioID),
+    CONSTRAINT FK_GSC_Secretario FOREIGN KEY (SecretarioID) REFERENCES Secretarios(SecretarioID),
     CONSTRAINT FK_GSC_Contrato FOREIGN KEY (ContratoID) REFERENCES Contratos(ContratoID)
 );
 
@@ -412,9 +415,7 @@ INSERT INTO Tesoreros (TesoreroID) VALUES (2);
 INSERT INTO Jefes_de_Departamento (JefeDepID) VALUES (3);
 INSERT INTO Secretarios (SecretarioID) VALUES (4);
 
-INSERT INTO Archivos (Tipo, Num_download, Num_view) VALUES 
-('PDF', 12, 45),
-('EXCEL', 5, 20);
+
 
 INSERT INTO Departamentos (tipo) VALUES 
 ('Mecanica'),
@@ -462,7 +463,6 @@ INSERT INTO Bienes (tipo, precio, cantidad) VALUES
 ('Portatiles i7', 850.00, 10),
 ('Pizarras digitales', 420.50, 3);
 
-INSERT INTO Gestion_MiemArch (UsuarioID, ArchivoID) VALUES (5, 1), (6, 2);
 INSERT INTO Gestion_JefeMiembro (JefeDepID, UsuarioID) VALUES (3, 5), (3, 6);
 
 INSERT INTO Crea_Tarea (JefeDepID, TareaName) VALUES 
@@ -473,7 +473,7 @@ INSERT INTO Gestion_Sesion (JefeDepID, SesionName) VALUES (3, 'Sprint Planning 1
 
 INSERT INTO Organiza_Grupo (JefeDepID, GrupoID) VALUES (3, 1), (3, 2);
 INSERT INTO Encargado_Departamento (JefeDepID, Num_Dep) VALUES (3, 1);
-INSERT INTO Visualiza_Archivo (GrupoID, ArchivoID) VALUES (1, 1), (2, 2);
+
 INSERT INTO Guarda_Acta (SecretarioID, ActasID) VALUES (4, 1), (4, 2);
 INSERT INTO Crea_Reunion (SecretarioID, ReunionID) VALUES (4, 1), (4, 2);
 INSERT INTO Gestion_SecretarioContrato (SecretarioID, ContratoID) VALUES (4, 1), (4, 2);
