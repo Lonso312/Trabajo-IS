@@ -1,40 +1,67 @@
-class ReunionVO:
-    def __init__(self, idReunion=None, fecha=None, tipo=None, estado=None):
-        self.idReunion = idReunion
-        self.fecha = fecha
-        self.tipo = tipo
-        self.estado = estado
+# archivo: VO/ReunionSecretariaVO.py
+
+class ReunionSecretariaVO:
+    def __init__(self, reunion_id=None, titulo="", fecha="", hora="", lugar="", secretario_id=None, estado="Programada"):
+        self._reunion_id = reunion_id
+        self._titulo = titulo
+        self._fecha = fecha
+        self._hora = hora
+        self._lugar = lugar
+        self._secretario_id = secretario_id
+        self._estado = estado
+
+    # --- GETTERS Y SETTERS ---
+    @property
+    def reunion_id(self): return self._reunion_id
+    @reunion_id.setter
+    def reunion_id(self, value): self._reunion_id = value
 
     @property
-    def tipo(self):
-        return self._tipo
-
-    @tipo.setter
-    def tipo(self, value):
-        if value and isinstance(value, str) and not value.strip():
-            raise ValueError("El tipo de reunión no puede estar vacío o en blanco.")
-        self._tipo = value
+    def titulo(self): return self._titulo
+    @titulo.setter
+    def titulo(self, value): self._titulo = str(value).strip()
 
     @property
-    def estado(self):
-        return self._estado
+    def fecha(self): return self._fecha
+    @fecha.setter
+    def fecha(self, value): self._fecha = value
 
+    @property
+    def hora(self): return self._hora
+    @hora.setter
+    def hora(self, value): self._hora = str(value).strip()
+
+    @property
+    def lugar(self): return self._lugar
+    @lugar.setter
+    def lugar(self, value): self._lugar = str(value).strip()
+
+    @property
+    def estado(self): return self._estado
     @estado.setter
-    def estado(self, value):
-        if value and isinstance(value, str) and not value.strip():
-            raise ValueError("El estado de la reunión no puede estar vacío o en blanco.")
-        self._estado = value
+    def estado(self, value): self._estado = str(value).strip()
 
-    def __eq__(self, otro):
-        if not isinstance(otro, ReunionVO):
-            return False
-        return (self.idReunion == otro.idReunion and 
-                self.fecha == otro.fecha and 
-                self.tipo == otro.tipo and 
-                self.estado == otro.estado)
+    def to_dict(self):
+        """Convierte el objeto a un diccionario (útil para APIs o JSON)"""
+        return {
+            "reunion_id": self._reunion_id,
+            "titulo": self._titulo,
+            "fecha": self._fecha,
+            "hora": self._hora,
+            "lugar": self._lugar,
+            "estado": self._estado
+        }
 
-    def __str__(self):
-        return f"ReunionVO[ID: {self.idReunion} | Tipo: {self.tipo} | Estado: {self.estado} | Fecha: {self.fecha}]"
-
-    def __repr__(self):
-        return self.__str__()
+    @staticmethod
+    def from_fila_db(fila):
+        """Construye un VO a partir de una tupla/fila de la base de datos"""
+        if not fila:
+            return None
+        return ReunionSecretariaVO(
+            reunion_id=fila[0],
+            titulo=fila[1],
+            fecha=fila[2],
+            hora=fila[3],
+            lugar=fila[4],
+            estado=fila[5]
+        )

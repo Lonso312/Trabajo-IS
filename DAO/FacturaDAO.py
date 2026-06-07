@@ -1,5 +1,5 @@
 # archivo: DAO/FacturaDAO.py
-
+from VO.factura_vo import FacturaVO
 class FacturaDAO:
     def __init__(self, conexion_db):
         self.conexion = conexion_db
@@ -27,7 +27,7 @@ class FacturaDAO:
         finally:
             cursor.close()
 
-    def insertar_factura(self, concepto, monto, fecha, estado):
+    def insertar_factura(self,factura:FacturaVO):
         """Inserta una nueva factura en la base de datos"""
         cursor = self.conexion.cursor()
         sql = """
@@ -35,7 +35,7 @@ class FacturaDAO:
             VALUES (?, ?, ?, ?)
         """
         try:
-            cursor.execute(sql, [str(concepto).strip(), float(monto), str(fecha), str(estado).strip()])
+            cursor.execute(sql, [factura.concepto, factura.monto, factura.fecha, factura.estado])
             self.conexion.commit()
             return True
         except Exception as e:

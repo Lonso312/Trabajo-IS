@@ -108,13 +108,10 @@ CREATE TABLE Presidentes(
 );
 
 CREATE TABLE Archivos(
-    ArchivoID INT identity(1,1) not null CONSTRAINT PK_ArchivoID PRIMARY KEY,
-    Nombre nvarchar(100) not null,
-    Tipo varchar(15) not null CONSTRAINT CK_Tipo CHECK (UPPER(Tipo) = 'PDF'),
-    Contenido VARBINARY(MAX) not null,       
-    RolPermitido varchar(100) not null,     
-    Num_download INT not null DEFAULT 0,
-    Num_view INT not null DEFAULT 0
+	ArchivoID INT identity(1,1) not null CONSTRAINT PK_ArchivoID PRIMARY KEY,
+	Tipo varchar(15) not null CONSTRAINT CK_Tipo CHECK (UPPER(Tipo) IN ('PDF', 'EXCEL', 'CSV', 'RAR', 'TXT', 'JPG', 'PNG')),
+	Num_download INT not null,
+	Num_view INT not null
 );
 
 CREATE TABLE Tareas(
@@ -365,10 +362,7 @@ CREATE TABLE TieneSesion (
 );
 GO
 
-<<<<<<< HEAD
-=======
 -- CORRECCIÓN: El Trigger se sitúa al final del bloque estructural para garantizar que 'EstaEnGrupo' y 'Grupos' ya existan.
->>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
 CREATE TRIGGER TR_ActualizarNumMiembros
 ON EstaEnGrupo
 AFTER INSERT, UPDATE, DELETE
@@ -418,9 +412,9 @@ INSERT INTO Tesoreros (TesoreroID) VALUES (2);
 INSERT INTO Jefes_de_Departamento (JefeDepID) VALUES (3);
 INSERT INTO Secretarios (SecretarioID) VALUES (4);
 
-INSERT INTO Archivos (Nombre, Tipo, Contenido, RolPermitido, Num_download, Num_view) VALUES
-('demo1.pdf', 'PDF', 0x25, 'TODOS', 12, 45),
-('demo2.pdf', 'PDF', 0x25, 'PRESIDENTE,SECRETARIO', 5, 20);
+INSERT INTO Archivos (Tipo, Num_download, Num_view) VALUES 
+('PDF', 12, 45),
+('EXCEL', 5, 20);
 
 INSERT INTO Departamentos (tipo) VALUES 
 ('Mecanica'),

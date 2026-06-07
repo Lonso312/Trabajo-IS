@@ -1,39 +1,40 @@
-<<<<<<< HEAD
 # archivo: DAO/SecretariaDAO.py
+from VO.reunion_vo import ReunionSecretariaVO
 
 class SecretariaDAO:
     def __init__(self, conexion_db):
         self.conexion = conexion_db
 
     def obtener_reuniones_secretaria(self):
-        """Trae todas las reuniones registradas en el sistema"""
+        """Trae todas las reuniones registradas devolviendo una lista de objetos VO"""
         cursor = self.conexion.cursor()
         sql = "SELECT ReunionID, Titulo, Fecha, Hora, Lugar, Estado FROM SecretariaReuniones ORDER BY Fecha DESC"
-        lista = []
+        lista_vo = []
         try:
             cursor.execute(sql)
             for fila in cursor.fetchall():
-                lista.append({
-                    "id": fila[0],
-                    "titulo": str(fila[1]).strip(),
-                    "fecha": str(fila[2]),
-                    "hora": str(fila[3]).strip(),
-                    "lugar": str(fila[4]).strip(),
-                    "estado": str(fila[5]).strip()
-                })
-            return lista
+                # Utilizamos el método estático del VO para mapear la fila limpiamente
+                reunion_vo = ReunionSecretariaVO.from_fila_db(fila)
+                lista_vo.append(reunion_vo)
+            return lista_vo
         except Exception as e:
             print(f"Error en SecretariaDAO.obtener_reuniones_secretaria: {e}")
             return []
         finally:
             cursor.close()
 
-    def registrar_reunion(self, titulo, fecha, hora, lugar):
-        """Permite al Secretario agendar una nueva reunión"""
+    def registrar_reunion(self, reunion_vo: ReunionSecretariaVO):
+        """Permite al Secretario agendar una nueva reunión recibiendo un objeto VO"""
         cursor = self.conexion.cursor()
-        sql = "INSERT INTO SecretariaReuniones (Titulo, Fecha, Hora, Lugar, Estado) VALUES (?, ?, ?, ?, 'Programada')"
+        sql = "INSERT INTO SecretariaReuniones (Titulo, Fecha, Hora, Lugar, Estado) VALUES (?, ?, ?, ?, ?)"
         try:
-            cursor.execute(sql, [str(titulo).strip(), str(fecha), str(hora).strip(), str(lugar).strip()])
+            cursor.execute(sql, [
+                reunion_vo.titulo, 
+                reunion_vo.fecha, 
+                reunion_vo.hora, 
+                reunion_vo.lugar,
+                reunion_vo.estado
+            ])
             self.conexion.commit()
             return True
         except Exception as e:
@@ -43,7 +44,7 @@ class SecretariaDAO:
             cursor.close()
 
     def actualizar_estado_reunion(self, reunion_id, nuevo_estado):
-        """Modifica el estado de la reunión (ej: 'Celebrada' o 'Cancelada')"""
+        """Modifica el estado de la reunión"""
         cursor = self.conexion.cursor()
         sql = "UPDATE SecretariaReuniones SET Estado = ? WHERE ReunionID = ?"
         try:
@@ -54,61 +55,4 @@ class SecretariaDAO:
             print(f"Error en SecretariaDAO.actualizar_estado_reunion: {e}")
             return False
         finally:
-=======
-# archivo: DAO/SecretariaDAO.py
-
-class SecretariaDAO:
-    def __init__(self, conexion_db):
-        self.conexion = conexion_db
-
-    def obtener_reuniones_secretaria(self):
-        """Trae todas las reuniones registradas en el sistema"""
-        cursor = self.conexion.cursor()
-        sql = "SELECT ReunionID, Titulo, Fecha, Hora, Lugar, Estado FROM SecretariaReuniones ORDER BY Fecha DESC"
-        lista = []
-        try:
-            cursor.execute(sql)
-            for fila in cursor.fetchall():
-                lista.append({
-                    "id": fila[0],
-                    "titulo": str(fila[1]).strip(),
-                    "fecha": str(fila[2]),
-                    "hora": str(fila[3]).strip(),
-                    "lugar": str(fila[4]).strip(),
-                    "estado": str(fila[5]).strip()
-                })
-            return lista
-        except Exception as e:
-            print(f"Error en SecretariaDAO.obtener_reuniones_secretaria: {e}")
-            return []
-        finally:
-            cursor.close()
-
-    def registrar_reunion(self, titulo, fecha, hora, lugar):
-        """Permite al Secretario agendar una nueva reunión"""
-        cursor = self.conexion.cursor()
-        sql = "INSERT INTO SecretariaReuniones (Titulo, Fecha, Hora, Lugar, Estado) VALUES (?, ?, ?, ?, 'Programada')"
-        try:
-            cursor.execute(sql, [str(titulo).strip(), str(fecha), str(hora).strip(), str(lugar).strip()])
-            self.conexion.commit()
-            return True
-        except Exception as e:
-            print(f"Error en SecretariaDAO.registrar_reunion: {e}")
-            return False
-        finally:
-            cursor.close()
-
-    def actualizar_estado_reunion(self, reunion_id, nuevo_estado):
-        """Modifica el estado de la reunión (ej: 'Celebrada' o 'Cancelada')"""
-        cursor = self.conexion.cursor()
-        sql = "UPDATE SecretariaReuniones SET Estado = ? WHERE ReunionID = ?"
-        try:
-            cursor.execute(sql, [str(nuevo_estado), int(reunion_id)])
-            self.conexion.commit()
-            return True
-        except Exception as e:
-            print(f"Error en SecretariaDAO.actualizar_estado_reunion: {e}")
-            return False
-        finally:
->>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
             cursor.close()

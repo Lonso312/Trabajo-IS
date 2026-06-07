@@ -88,6 +88,9 @@ class GestionMiembrosView(QWidget):
 
         # Tabla de Miembros
         self.tabla_miembros = QTableWidget()
+
+        # Tabla de Miembros
+        self.tabla_miembros = QTableWidget()
         self.tabla_miembros.setColumnCount(3)
         self.tabla_miembros.setHorizontalHeaderLabels(["Nombre Completo", "Rol", "Correo Electrónico"])
         self.tabla_miembros.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -214,6 +217,7 @@ class GestionMiembrosView(QWidget):
             QPushButton:hover { opacity: 0.9; }
         """
         
+        
         rol_operador = self._obtener_rol_operador()
         
         if miembro_vo.Aceptado != 1:
@@ -228,12 +232,7 @@ class GestionMiembrosView(QWidget):
         self.layout_derecho.addWidget(btn_editar)
         
         btn_eliminar = QPushButton("Eliminar Miembro")
-<<<<<<< HEAD
-        # Fusión: Control extendido para JEFE DEPARTAMENTO, TESORERO y SECRETARIO
-        if str(miembro_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador in ["JEFE DEPARTAMENTO", "TESORERO", "SECRETARIO"]:
-=======
         if str(miembro_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador in ["JEFE DEPARTAMENTO","TESORERO","SECRETARIO"]:
->>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
             btn_eliminar.setEnabled(False) 
             btn_eliminar.setStyleSheet(style_botones + "QPushButton { background-color: #BDC3C7; color: #7F8C8D; border: 2px solid #7F8C8D; }")
             btn_eliminar.setToolTip("No tienes permisos para eliminar al Presidente del sistema.")
@@ -243,6 +242,7 @@ class GestionMiembrosView(QWidget):
         btn_eliminar.clicked.connect(lambda: self.confirmar_eliminacion(miembro_vo.UsuarioID))
         self.layout_derecho.addWidget(btn_eliminar)
         self.layout_derecho.addStretch()
+        
 
     def abrir_dialogo_edicion(self):
         if self.miembro_actual_vo:
@@ -268,12 +268,7 @@ class GestionMiembrosView(QWidget):
     def confirmar_eliminacion(self, usuario_id):
         rol_operador = self._obtener_rol_operador()
             
-<<<<<<< HEAD
-        # Fusión: Validación de seguridad multi-rol
-        if self.miembro_actual_vo and str(self.miembro_actual_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador in ["JEFE DEPARTAMENTO", "TESORERO", "SECRETARIO"]:
-=======
         if self.miembro_actual_vo and str(self.miembro_actual_vo.Rol).strip().upper() == "PRESIDENTE" and rol_operador in ["JEFE DEPARTAMENTO","TESORERO","SECRETARIO"]:
->>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
             QMessageBox.critical(self, "Acceso Denegado", "Operación cancelada: No puedes eliminar al Presidente.")
             return
 
@@ -282,6 +277,7 @@ class GestionMiembrosView(QWidget):
                                    QMessageBox.Yes | QMessageBox.No)
         if msg == QMessageBox.Yes:
             self.callback_eliminar(usuario_id)
+
 
     def mostrar_mensaje_vacio(self):
         self.limpiar_layout_derecho()
@@ -348,12 +344,13 @@ class GestionMiembrosView(QWidget):
 
     def _obtener_rol_operador(self):
         """Devuelve el rol del usuario autenticado de forma segura o 'MIEMBRO' restrictivo por defecto"""
+        
         if not hasattr(self, 'controller') or self.controller is None:
             print("DEBUG: ¡La vista NO tiene acceso a self.controller!")
             return "MIEMBRO"
             
         if not hasattr(self.controller, 'usuario_logueado') or not self.controller.usuario_logueado:
-            print("DEBUG: self.controller existe, pero 'usuario_logueado' está vacío o es None.")
+            print("EBUG: self.controller existe, pero 'usuario_logueado' está vacío o es None.")
             return "MIEMBRO"
 
         user = self.controller.usuario_logueado
