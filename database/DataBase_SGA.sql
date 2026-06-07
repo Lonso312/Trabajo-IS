@@ -494,6 +494,19 @@ INSERT INTO TieneSesion (GrupoID, SesionID, AsistenciaObligatoria) VALUES
 (1, 'Sesion Tecnica Especial de Motores', 1), 
 (2, 'Sesion Tecnica Especial de Motores', 0), 
 (3, 'Asamblea de Presupuesto General', 1);
+
+INSERT INTO Grupos (Name) VALUES ('Tesorería');
+
+DECLARE @GrupoTesoreriaID INT;
+SELECT @GrupoTesoreriaID = GrupoID FROM Grupos WHERE Name = 'Tesorería';
+
+-- Vincular a Ana (Tesorera, UsuarioID = 2) y a Carlos (Presidente, UsuarioID = 1)
+INSERT INTO EstaEnGrupo (UsuarioID, GrupoID) VALUES (2, @GrupoTesoreriaID);
+INSERT INTO EstaEnGrupo (UsuarioID, GrupoID) VALUES (1, @GrupoTesoreriaID);
+
+-- 3. Asignar la tarea financiera que tenías creada pero sin grupo asignado
+INSERT INTO TieneTarea (GrupoID, TareaID, EstadoTarea) 
+VALUES (@GrupoTesoreriaID, 'Firma de balance anual', 'Pendiente');
 GO
 
 -- ============================================================================

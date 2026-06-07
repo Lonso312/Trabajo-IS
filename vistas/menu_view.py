@@ -64,6 +64,7 @@ class MenuView(QMainWindow):
         # Estas referencias se inyectarán desde main.py tras inicializar la vista
         self.grupo_controller = None
         self.tarea_controller = None
+        self.bienes_controller = None  # Se inyectará dinámicamente
         
         self.id_grupo_seleccionado = None  # Almacena el ID del grupo activo
         self.tarjetas_izquierda = []  
@@ -119,6 +120,29 @@ class MenuView(QMainWindow):
             self.btn_gestionar_miembros.clicked.connect(self.callback_abrir_gestion)
             top_bar.addWidget(self.btn_gestionar_miembros)
             top_bar.addSpacing(10) 
+
+        # BOTÓN NUEVO: Gestión de Bienes (Se ubica en la barra superior manteniendo el diseño limpio)
+        if rol_limpio_check in ["PRESIDENTE", "TESORERO"]:
+            self.btn_bienes = QPushButton("Inventario")
+            self.btn_bienes.setCursor(Qt.PointingHandCursor)
+            self.btn_bienes.setStyleSheet("""
+                QPushButton {
+                    background-color: #FFFFFF;
+                    border: 2px solid #2ECC71;
+                    border-radius: 10px;
+                    padding: 5px 15px;
+                    font-weight: bold;
+                    color: #2ECC71;
+                }
+                QPushButton:hover {
+                    background-color: #E8F8F5;
+                    border-color: #27AE60;
+                    color: #27AE60;
+                }
+            """)
+            self.btn_bienes.clicked.connect(self.abrir_modulo_bienes)
+            top_bar.addWidget(self.btn_bienes)
+            top_bar.addSpacing(10)
 
         btn_logout = QPushButton("Cerrar Sesión")
         btn_logout.setCursor(Qt.PointingHandCursor)
@@ -202,7 +226,6 @@ class MenuView(QMainWindow):
         for i, grupo in enumerate(self.lista_grupos):
             nombre_grupo = str(grupo['nombre'])
             cant_miembros = str(grupo['cantidad_miembros'])
-            
             
             tarjeta = TarjetaClicable(
                 id_entidad=grupo['id'],
@@ -416,3 +439,14 @@ class MenuView(QMainWindow):
                     if int(tarjeta.id_entidad) == int(self.id_grupo_seleccionado):
                         self.grupo_seleccionado(self.id_grupo_seleccionado, tarjeta)
                         break
+
+    def abrir_modulo_bienes(self):
+        """Método puente para abrir la pantalla de bienes desde el controlador inyectado"""
+        if hasattr(self, 'bienes_controller') and self.bienes_controller:
+            self.bienes_controller.abrir_pantalla_bienes()
+        else:
+            QMessageBox.warning(
+                self, 
+                "Error de Inicialización", 
+                "El módulo de bienes no se encuentra disponible o no posees los privilegios requeridos."
+            )
