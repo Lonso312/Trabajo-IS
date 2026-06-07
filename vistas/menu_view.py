@@ -2,7 +2,7 @@
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QLabel, QPushButton, QFrame, QInputDialog, 
                              QDialog, QFormLayout, QLineEdit, QTextEdit, 
-                             QDialogButtonBox, QMessageBox, QScrollArea) # 👈 Importado QScrollArea
+                             QDialogButtonBox, QMessageBox, QScrollArea, QComboBox) 
 from PyQt5.QtCore import Qt
 
 # =================================================================
@@ -70,6 +70,8 @@ class MenuView(QMainWindow):
         self.tarjetas_izquierda = []  
         self.init_ui()
 
+    # archivo: vistas/menu_view.py
+
     def init_ui(self):
         self.setWindowTitle(f"SGA - Sistema de Gestión ({str(self.miembro.Rol)})")
         self.resize(1000, 650)
@@ -81,7 +83,7 @@ class MenuView(QMainWindow):
         main_layout.setContentsMargins(25, 20, 25, 25)
 
         # -------------------------------------------------------------
-        # 1. BARRA SUPERIOR (Información del Usuario, Cambio de Pass y Botones)
+        # 1. BARRA SUPERIOR
         # -------------------------------------------------------------
         top_bar = QHBoxLayout()
         
@@ -98,13 +100,8 @@ class MenuView(QMainWindow):
         btn_cambiar_pass.setCursor(Qt.PointingHandCursor)
         btn_cambiar_pass.setStyleSheet("""
             QPushButton {
-                background-color: #7F8C8D; 
-                color: white; 
-                font-weight: bold; 
-                font-size: 11px;
-                padding: 3px 8px; 
-                border-radius: 4px;
-                border: none;
+                background-color: #7F8C8D; color: white; font-weight: bold; font-size: 11px;
+                padding: 3px 8px; border-radius: 4px; border: none;
             }
             QPushButton:hover { background-color: #95A5A6; }
         """)
@@ -114,27 +111,16 @@ class MenuView(QMainWindow):
         top_bar.addLayout(user_info_layout)
         top_bar.addStretch()  
         
-        # VALIDACIÓN VISUAL DEL ROL Y BOTONES DE GESTIÓN ADMINISTRATIVA
+        # VALIDACIÓN VISUAL DEL ROL
         rol_limpio_check = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
         self.es_admin = rol_limpio_check in ["PRESIDENTE", "JEFE DEPARTAMENTO"]
-        
+        self.es_tesorero = rol_limpio_check in ["TESORERO", "PRESIDENTE"] 
         if rol_limpio_check in ["PRESIDENTE", "SECRETARIO", "TESORERO", "JEFE DEPARTAMENTO"]:
             self.btn_gestionar_miembros = QPushButton("Gestionar Miembros")
             self.btn_gestionar_miembros.setCursor(Qt.PointingHandCursor)
             self.btn_gestionar_miembros.setStyleSheet("""
-                QPushButton {
-                    background-color: #FFFFFF;
-                    border: 2px solid #6B46C1;
-                    border-radius: 10px;
-                    padding: 5px 15px;
-                    font-weight: bold;
-                    color: #6B46C1;
-                }
-                QPushButton:hover {
-                    background-color: #FAF5FF;
-                    border-color: #553C9A;
-                    color: #553C9A;
-                }
+                QPushButton { background-color: #FFFFFF; border: 2px solid #6B46C1; border-radius: 10px; padding: 5px 15px; font-weight: bold; color: #6B46C1; }
+                QPushButton:hover { background-color: #FAF5FF; border-color: #553C9A; color: #553C9A; }
             """)
             self.btn_gestionar_miembros.clicked.connect(self.callback_abrir_gestion)
             top_bar.addWidget(self.btn_gestionar_miembros)
@@ -144,19 +130,8 @@ class MenuView(QMainWindow):
             self.btn_bienes = QPushButton("Inventario")
             self.btn_bienes.setCursor(Qt.PointingHandCursor)
             self.btn_bienes.setStyleSheet("""
-                QPushButton {
-                    background-color: #FFFFFF;
-                    border: 2px solid #2ECC71;
-                    border-radius: 10px;
-                    padding: 5px 15px;
-                    font-weight: bold;
-                    color: #2ECC71;
-                }
-                QPushButton:hover {
-                    background-color: #E8F8F5;
-                    border-color: #27AE60;
-                    color: #27AE60;
-                }
+                QPushButton { background-color: #FFFFFF; border: 2px solid #2ECC71; border-radius: 10px; padding: 5px 15px; font-weight: bold; color: #2ECC71; }
+                QPushButton:hover { background-color: #E8F8F5; border-color: #27AE60; color: #27AE60; }
             """)
             self.btn_bienes.clicked.connect(self.abrir_modulo_bienes)
             top_bar.addWidget(self.btn_bienes)
@@ -165,17 +140,8 @@ class MenuView(QMainWindow):
         btn_logout = QPushButton("Cerrar Sesión")
         btn_logout.setCursor(Qt.PointingHandCursor)
         btn_logout.setStyleSheet("""
-            QPushButton {
-                background-color: #FFFFFF;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                padding: 5px 15px;
-                font-weight: bold;
-                color: #000000;
-            }
-            QPushButton:hover {
-                background-color: #EFEFEF;
-            }
+            QPushButton { background-color: #FFFFFF; border: 2px solid #000000; border-radius: 10px; padding: 5px 15px; font-weight: bold; color: #000000; }
+            QPushButton:hover { background-color: #EFEFEF; }
         """)
         btn_logout.clicked.connect(self.callback_logout)
         top_bar.addWidget(btn_logout)
@@ -184,40 +150,33 @@ class MenuView(QMainWindow):
         main_layout.addSpacing(15)
 
         # -------------------------------------------------------------
-        # 2. CONTENIDO PRINCIPAL (Diseño de paneles izquierdo/derecho)
+        # 2. CONTENIDO PRINCIPAL (Paneles izquierdo/derecho)
         # -------------------------------------------------------------
         content_layout = QHBoxLayout()
         
-        # 🔄 REESTRUCTURACIÓN: Área de scroll para el panel izquierdo
+        # Área de scroll para el panel izquierdo
         self.scroll_izquierda = QScrollArea()
         self.scroll_izquierda.setWidgetResizable(True)
-        self.scroll_izquierda.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background-color: transparent;
-            }
-        """)
+        self.scroll_izquierda.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
         
-        # Contenedor del contenido interno del scroll
         self.widget_contenedor_izq = QWidget()
         self.widget_contenedor_izq.setStyleSheet("background-color: transparent;")
         self.left_layout = QVBoxLayout(self.widget_contenedor_izq)
-        self.left_layout.setContentsMargins(0, 0, 5, 0) # Margen derecho sutil para no tapar la barra
+        self.left_layout.setContentsMargins(0, 0, 5, 0)
         
-        # Cargamos las tarjetas en el layout
+        # Cargamos las tarjetas y la posible sección de tesorería
         self.cargar_grupos_izquierdos()
         
-        # Asignamos el widget al scroll y agregamos el scroll al layout principal
         self.scroll_izquierda.setWidget(self.widget_contenedor_izq)
         content_layout.addWidget(self.scroll_izquierda, stretch=2)  
 
-        # Línea Divisora Central Estricta
+        # Línea Divisora Central
         linea = QFrame()
         linea.setFrameShape(QFrame.VLine)
         linea.setStyleSheet("color: #A0A0A0; width: 2px; margin: 0px 15px;")
         content_layout.addWidget(linea)
 
-        # Panel Derecho (Contenedor maestro de Tareas)
+        # Panel Derecho (Contenedor maestro de Tareas / Facturas)
         right_container = QFrame()
         right_container.setStyleSheet("background-color: #FFFFFF; border: 2px solid #000000; border-radius: 5px;")
         self.right_layout = QVBoxLayout(right_container)
@@ -229,7 +188,7 @@ class MenuView(QMainWindow):
         self.mostrar_mensaje_vacio()
 
     def cargar_grupos_izquierdos(self):
-        """Vuelca dinámicamente las tarjetas reactivas de grupos en el menú izquierdo"""
+        """Vuelca dinámicamente las tarjetas reactivas de grupos y la sección de tesorería si aplica"""
         while self.left_layout.count():
             item = self.left_layout.takeAt(0)
             if item.widget(): 
@@ -237,27 +196,23 @@ class MenuView(QMainWindow):
 
         self.tarjetas_izquierda.clear()
 
+        # Título de sección Grupos
+        lbl_seccion_grupos = QLabel("MIS GRUPOS")
+        lbl_seccion_grupos.setStyleSheet("font-weight: bold; color: #555555; font-size: 11px; margin-bottom: 5px;")
+        self.left_layout.addWidget(lbl_seccion_grupos)
+
         if hasattr(self, 'es_admin') and self.es_admin:
             self.btn_crear_grupo = QPushButton("+ Crear Nuevo Grupo")
             self.btn_crear_grupo.setCursor(Qt.PointingHandCursor)
             self.btn_crear_grupo.setStyleSheet("""
-                QPushButton {
-                    background-color: #6B46C1;
-                    border: 2px solid #000000;
-                    border-radius: 5px;
-                    padding: 8px;
-                    font-weight: bold;
-                    color: #FFFFFF;
-                    margin-bottom: 10px;
-                }
-                QPushButton:hover {
-                    background-color: #553C9A;
-                }
+                QPushButton { background-color: #6B46C1; border: 2px solid #000000; border-radius: 5px; padding: 8px; font-weight: bold; color: #FFFFFF; margin-bottom: 10px; }
+                QPushButton:hover { background-color: #553C9A; }
             """)
             self.btn_crear_grupo.clicked.connect(self.abrir_dialogo_crear_grupo)
             self.left_layout.addWidget(self.btn_crear_grupo)
 
-        for i, grupo in enumerate(self.lista_grupos):
+        # Cargar grupos existentes
+        for grupo in self.lista_grupos:
             nombre_grupo = str(grupo['nombre'])
             cant_miembros = str(grupo['cantidad_miembros'])
             
@@ -269,12 +224,31 @@ class MenuView(QMainWindow):
                 es_verde=False
             )
             
-            if self.id_grupo_seleccionado and int(grupo['id']) == int(self.id_grupo_seleccionado):
+            # Verificar si estaba seleccionado y no estamos en modo factura
+            if self.id_grupo_seleccionado and int(grupo['id']) == int(self.id_grupo_seleccionado) and getattr(self, 'seccion_facturas_activa', False) == False:
                 tarjeta.marcar_activa(True)
 
             self.left_layout.addWidget(tarjeta)
             self.tarjetas_izquierda.append(tarjeta)
         
+        
+        if hasattr(self, 'es_tesorero') and self.es_tesorero:
+            self.left_layout.addSpacing(20)
+            
+            lbl_seccion_tesoreria = QLabel("TESORERÍA")
+            lbl_seccion_tesoreria.setStyleSheet("font-weight: bold; color: #27AE60; font-size: 11px; margin-bottom: 5px;")
+            self.left_layout.addWidget(lbl_seccion_tesoreria)
+            
+            # Usamos TarjetaClicable reutilizando el componente para mantener la estética uniforme
+            self.tarjeta_facturas = TarjetaClicable(
+                id_entidad=-99, # ID ficticio para identificar facturas
+                titulo="Gestión de Facturas",
+                sub_1="Crear y administrar",
+                callback_click=self.abrir_seccion_facturas,
+                es_verde=getattr(self, 'seccion_facturas_activa', False)
+            )
+            self.left_layout.addWidget(self.tarjeta_facturas)
+
         self.left_layout.addStretch()
 
     def mostrar_mensaje_vacio(self):
@@ -293,6 +267,7 @@ class MenuView(QMainWindow):
 
     def grupo_seleccionado(self, id_grupo, tarjeta_pulsada):
         """Manejador del Evento Clic: Actualiza colores de selección y renderiza las tareas"""
+        self.seccion_facturas_activa = False
         if id_grupo is None or tarjeta_pulsada is None:
             self.mostrar_mensaje_vacio()
             return
@@ -532,3 +507,198 @@ class MenuView(QMainWindow):
                 "Error de Inicialización", 
                 "El módulo de bienes no se encuentra disponible o no posees los privilegios requeridos."
             )
+
+
+    def abrir_seccion_facturas(self, id_entidad, tarjeta_pulsada):
+        """Activa la vista de facturas en el panel derecho y desmarca los grupos"""
+        self.seccion_facturas_activa = True
+        self.id_grupo_seleccionado = None
+        
+        # Desmarcar tarjetas de grupos y marcar la de facturas
+        for tarjeta in self.tarjetas_izquierda:
+            tarjeta.marcar_activa(False)
+        tarjeta_pulsada.marcar_activa(True)
+        
+        self.cargar_panel_facturas()
+
+    def cargar_panel_facturas(self):
+        """Limpia el panel derecho y renderiza las opciones y lista de facturas desde la BD"""
+        while self.right_layout.count():
+            item = self.right_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+                
+        # Botón para Crear Factura
+        self.btn_crear_factura = QPushButton("Registrar Nueva Factura")
+        self.btn_crear_factura.setCursor(Qt.PointingHandCursor)
+        self.btn_crear_factura.setStyleSheet("""
+            QPushButton { background-color: #2ECC71; border: 2px solid #000000; border-radius: 5px; padding: 8px; font-weight: bold; color: #FFFFFF; margin-bottom: 12px; }
+            QPushButton:hover { background-color: #27AE60; }
+        """)
+        self.btn_crear_factura.clicked.connect(self.abrir_dialogo_crear_factura)
+        self.right_layout.addWidget(self.btn_crear_factura)
+        
+        # 🔌 LLAMADA REAL AL DAO: Obtener registros actualizados de la base de datos
+        if hasattr(self, 'factura_dao') and self.factura_dao:
+            lista_facturas = self.factura_dao.obtener_todas_las_facturas()
+        else:
+            lista_facturas = []
+            
+        for fac in lista_facturas:
+            self.crear_tarjeta_factura(fac)
+            
+        self.right_layout.addStretch()
+
+    def crear_tarjeta_factura(self, factura_dict):
+        """Crea un contenedor para cada factura con un botón de edición incluido"""
+        frame = QFrame()
+        frame.setStyleSheet("QFrame { background-color: #FFFFFF; border: 2px solid #000000; border-radius: 8px; }")
+        
+        layout_tarjeta = QVBoxLayout(frame)
+        layout_tarjeta.setContentsMargins(15, 12, 15, 12)
+        
+        fila_superior = QHBoxLayout()
+        
+        lbl_titulo = QLabel(str(factura_dict['concepto']))
+        lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; border: none;")
+        
+        lbl_info = QLabel(f"{factura_dict['monto']} | {factura_dict['fecha']}")
+        lbl_info.setStyleSheet("color: #666666; font-size: 12px; border: none;")
+        
+        fila_superior.addWidget(lbl_titulo)
+        fila_superior.addStretch()
+        fila_superior.addWidget(lbl_info)
+        
+        fila_inferior = QHBoxLayout()
+        lbl_estado = QLabel(f"Estado: {factura_dict['estado']}")
+        lbl_estado.setStyleSheet(f"color: {'#2ECC71' if factura_dict['estado'] == 'Pagado' else '#E74C3C'}; font-weight: bold; border: none;")
+        
+        btn_editar = QPushButton("Editar")
+        btn_editar.setCursor(Qt.PointingHandCursor)
+        btn_editar.setFixedSize(60, 22)
+        btn_editar.setStyleSheet("QPushButton { background-color: #F39C12; color: white; border-radius: 3px; font-size: 11px; font-weight: bold; border: none; } QPushButton:hover { background-color: #E67E22; }")
+        # Pasamos el diccionario de la factura correspondiente al hacer clic
+        btn_editar.clicked.connect(lambda checked, f=factura_dict: self.abrir_dialogo_editar_factura(f))
+        
+        fila_inferior.addWidget(lbl_estado)
+        fila_inferior.addStretch()
+        fila_inferior.addWidget(btn_editar)
+        
+        layout_tarjeta.addLayout(fila_superior)
+        layout_tarjeta.addLayout(fila_inferior)
+        
+        self.right_layout.addWidget(frame)
+
+    # =================================================================
+    # MODALES FORMULARIOS DE FACTURAS (CREAR / EDITAR)
+    # =================================================================
+    def abrir_dialogo_crear_factura(self):
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle("Registrar Nueva Factura")
+        dialogo.setMinimumWidth(380)
+        dialogo.setWindowFlags(dialogo.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        
+        layout_modal = QVBoxLayout(dialogo)
+        form = QFormLayout()
+        
+        txt_concepto = QLineEdit()
+        txt_monto = QLineEdit()
+        txt_monto.setPlaceholderText("Ej: 120.50")
+        
+        cb_estado = QComboBox()
+        cb_estado.addItems(["Pendiente", "Pagado"])
+        
+        form.addRow("Concepto / Detalle:", txt_concepto)
+        form.addRow("Monto (€):", txt_monto)
+        form.addRow("Estado del Pago:", cb_estado)
+        layout_modal.addLayout(form)
+        
+        botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        botones.accepted.connect(dialogo.accept)
+        botones.rejected.connect(dialogo.reject)
+        layout_modal.addWidget(botones)
+        
+        if dialogo.exec_() == QDialog.Accepted:
+            concepto = txt_concepto.text().strip()
+            monto_str = txt_monto.text().strip()
+            estado = cb_estado.currentText()
+            
+            if not concepto or not monto_str:
+                QMessageBox.warning(self, "Validación", "Todos los campos son obligatorios.")
+                return
+            
+            try:
+                monto = float(monto_str)
+            except ValueError:
+                QMessageBox.warning(self, "Validación", "El monto ingresado debe ser un número válido.")
+                return
+            
+            import datetime
+            fecha_hoy = datetime.date.today().strftime("%Y-%m-%d")
+            
+            # 🔌 LLAMADA REAL AL DAO: Insertar registro
+            if hasattr(self, 'factura_dao') and self.factura_dao:
+                exito = self.factura_dao.insertar_factura(concepto, monto, fecha_hoy, estado)
+                if exito:
+                    QMessageBox.information(self, "Éxito", "Factura guardada correctamente en la Base de Datos.")
+                    self.cargar_panel_facturas()
+                else:
+                    QMessageBox.critical(self, "Error", "No se pudo guardar la factura en la Base de Datos.")
+            else:
+                QMessageBox.critical(self, "Error de Sistema", "El DAO de facturas no está disponible.")
+
+
+    def abrir_dialogo_editar_factura(self, factura_dict):
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle(f"Editar Factura N° {factura_dict['id']}")
+        dialogo.setMinimumWidth(380)
+        dialogo.setWindowFlags(dialogo.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        
+        layout_modal = QVBoxLayout(dialogo)
+        form = QFormLayout()
+        
+        txt_concepto = QLineEdit(factura_dict['concepto'])
+        # Limpiamos los caracteres de moneda para el formulario
+        monto_limpio = factura_dict['monto'].replace(" €", "").strip()
+        txt_monto = QLineEdit(monto_limpio)
+        
+        cb_estado = QComboBox()
+        cb_estado.addItems(["Pendiente", "Pagado"])
+        cb_estado.setCurrentText(factura_dict['estado'])
+        
+        form.addRow("Concepto / Detalle:", txt_concepto)
+        form.addRow("Monto (€):", txt_monto)
+        form.addRow("Estado del Pago:", cb_estado)
+        layout_modal.addLayout(form)
+        
+        botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        botones.accepted.connect(dialogo.accept)
+        botones.rejected.connect(dialogo.reject)
+        layout_modal.addWidget(botones)
+        
+        if dialogo.exec_() == QDialog.Accepted:
+            concepto = txt_concepto.text().strip()
+            monto_str = txt_monto.text().strip()
+            estado = cb_estado.currentText()
+            
+            if not concepto or not monto_str:
+                QMessageBox.warning(self, "Validación", "Los campos no pueden estar vacíos.")
+                return
+                
+            try:
+                monto = float(monto_str)
+            except ValueError:
+                QMessageBox.warning(self, "Validación", "El monto ingresado debe ser un número válido.")
+                return
+            
+            # 🔌 LLAMADA REAL AL DAO: Actualizar el registro por su ID único
+            if hasattr(self, 'factura_dao') and self.factura_dao:
+                exito = self.factura_dao.actualizar_factura(factura_dict['id'], concepto, monto, estado)
+                if exito:
+                    QMessageBox.information(self, "Éxito", "Factura actualizada correctamente en la Base de Datos.")
+                    self.cargar_panel_facturas()
+                else:
+                    QMessageBox.critical(self, "Error", "No se pudieron guardar los cambios en la Base de Datos.")
+            else:
+                QMessageBox.critical(self, "Error de Sistema", "El DAO de facturas no está disponible.")

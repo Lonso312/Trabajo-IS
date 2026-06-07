@@ -133,10 +133,12 @@ CREATE TABLE Departamentos(
 	tipo varchar(50) not null
 );
 
-CREATE TABLE Facturas(
-	FacturaID INT identity(1,1) not null CONSTRAINT PK_FacturaID PRIMARY KEY,
-	fecha date not null,
-	cantidad DECIMAL(10,2) not null
+CREATE TABLE Facturas (
+    FacturaID INT IDENTITY(1,1) PRIMARY KEY,
+    Concepto VARCHAR(100) not null,
+    Monto FLOAT,
+    Fecha DATE,
+    EstadoFactura VARCHAR(20) DEFAULT ('Pendiente')
 );
 
 CREATE TABLE Actas(
@@ -428,9 +430,9 @@ INSERT INTO Sesiones (Name, Ubicacion) VALUES
 ('Asamblea de Presupuesto General', 'Sala de Juntas Principal'),
 ('Sprint Planning 1', 'Sala de Desarrollo B');
 
-INSERT INTO Facturas (fecha, cantidad) VALUES 
-('2026-05-10', 1250.75),
-('2026-05-28', 340.00);
+INSERT INTO Facturas (Concepto, Fecha, Monto) VALUES 
+('Radial','2026-05-10', 1250.75),
+('Pago al maker','2026-05-28', 340.00);
 
 INSERT INTO Actas (fecha) VALUES 
 ('2026-05-01'),
