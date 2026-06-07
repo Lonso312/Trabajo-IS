@@ -13,6 +13,7 @@ from DAO.tarea_dao import TareaDAO
 from DAO.departamentoDAO import DepartamentoDAO
 from DAO.BienesDAO import BienesDAO
 from DAO.FacturaDAO import FacturaDAO
+from DAO.SolicitudDAO import SolicitudDAO
 
 from vistas.login_view import LoginView
 from vistas.menu_view import MenuView
@@ -35,6 +36,7 @@ class ControladorApp:
             self.departamento_dao = DepartamentoDAO(self.conexion)
             self.bienes_dao = BienesDAO(self.conexion)
             self.factura_dao = FacturaDAO(self.conexion)
+            self.solicitud_dao = SolicitudDAO(self.conexion)
 
             # Controladores
             self.tarea_controller = TareaController(self.tarea_dao)
@@ -88,7 +90,8 @@ class ControladorApp:
             self.menu_view.tarea_controller = self.tarea_controller
             self.menu_view.bienes_controller = self.bienes_controller
             self.menu_view.factura_dao = self.factura_dao
-            
+            self.menu_view.solicitud_dao = self.solicitud_dao
+
             self.menu_view.show()
 
         else:

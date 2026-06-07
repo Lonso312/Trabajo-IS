@@ -141,6 +141,14 @@ CREATE TABLE Facturas (
     EstadoFactura VARCHAR(20) DEFAULT ('Pendiente')
 );
 
+CREATE TABLE SolicitudesMateriales (
+    SolicitudID INT IDENTITY(1,1) PRIMARY KEY,
+    Concepto VARCHAR(100) NOT NULL,
+    Cantidad INT NOT NULL,
+    Solicitante VARCHAR(100),
+    Estado VARCHAR(20) DEFAULT 'Pendiente'
+);
+
 CREATE TABLE Actas(
 	ActasID INT identity(1,1) not null CONSTRAINT PK_ActasID PRIMARY KEY,
 	fecha date not null
