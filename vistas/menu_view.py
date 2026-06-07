@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QDialog, QFormLayout, QLineEdit, QTextEdit, 
                              QDialogButtonBox, QMessageBox, QScrollArea, QComboBox) 
 from PyQt5.QtCore import Qt
+from utils.event_bus import EventBus
+
 
 class TarjetaClicable(QFrame):
     def __init__(self, id_entidad, titulo, sub_1, callback_click, es_verde=False, parent=None):
@@ -56,6 +58,7 @@ class MenuView(QMainWindow):
         self.tarjetas_izquierda = []  
         
         self.init_ui()
+        EventBus.get_instance().grupos_actualizados.connect(self.refrescar_grupos)
 
     def init_ui(self):
         self.setWindowTitle(f"SGA - Sistema de Gestión ({str(self.miembro.Rol)})")
@@ -479,7 +482,7 @@ class MenuView(QMainWindow):
         if ok and nombre.strip() and self.grupo_controller:
             exito, msg = self.grupo_controller.procesar_crear_grupo(self.miembro.Rol, nombre.strip(), self.miembro.UsuarioID)
             if exito:
-                self.refrescar_grupos()
+                EventBus.get_instance().grupos_actualizados.emit()
             else:
                 QMessageBox.critical(self, "Error", msg)
 

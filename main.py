@@ -107,31 +107,12 @@ class ControladorApp:
         self.login_view.show()
 
     def abrir_gestion_miembros_con_refresh(self):
-
-        # Pasar usuario actual al controlador
+        """Abre la gestión de miembros. El refresco ocurre mediante EventBus."""
         if self.miembro is not None:
             self.usuario_controller.usuario_logueado = self.miembro
 
+        # Abrimos la pantalla normalmente sin interceptar sus métodos internamente
         self.usuario_controller.abrir_pantalla_gestion()
-
-        from PyQt5.QtWidgets import QApplication
-        from vistas.gestion_miembros_view import GestionMiembrosView
-
-        for widget in QApplication.topLevelWidgets():
-            if isinstance(widget, GestionMiembrosView):
-
-                original_callback = widget.callback_actualizar
-
-                def callback_actualizar_wrapper(*args, **kwargs):
-                    resultado = original_callback(*args, **kwargs)
-
-                    if self.menu_view:
-                        self.menu_view.refrescar_grupos()
-
-                    return resultado
-
-                widget.callback_actualizar = callback_actualizar_wrapper
-                break
 
 
 if __name__ == '__main__':
