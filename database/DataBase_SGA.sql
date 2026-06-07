@@ -124,7 +124,7 @@ CREATE TABLE Sesiones(
 CREATE TABLE Grupos(
     GrupoID INT identity(1,1) not null CONSTRAINT PK_GroupID PRIMARY KEY,
     Num_miembros INT not null DEFAULT 0,
-    [Name] varchar(50) not null, 
+    [Name] varchar(50) not null UNIQUE, 
     Pin_jefedep INT NULL CONSTRAINT FK_Grupos_Pin_jefedep FOREIGN KEY (Pin_jefedep) REFERENCES Jefes_de_Departamento(Pin_jefedep)
 );
 
@@ -495,19 +495,7 @@ INSERT INTO TieneSesion (GrupoID, SesionID, AsistenciaObligatoria) VALUES
 (2, 'Sesion Tecnica Especial de Motores', 0), 
 (3, 'Asamblea de Presupuesto General', 1);
 
-INSERT INTO Grupos (Name) VALUES ('Tesorería');
 
-DECLARE @GrupoTesoreriaID INT;
-SELECT @GrupoTesoreriaID = GrupoID FROM Grupos WHERE Name = 'Tesorería';
-
--- Vincular a Ana (Tesorera, UsuarioID = 2) y a Carlos (Presidente, UsuarioID = 1)
-INSERT INTO EstaEnGrupo (UsuarioID, GrupoID) VALUES (2, @GrupoTesoreriaID);
-INSERT INTO EstaEnGrupo (UsuarioID, GrupoID) VALUES (1, @GrupoTesoreriaID);
-
--- 3. Asignar la tarea financiera que tenías creada pero sin grupo asignado
-INSERT INTO TieneTarea (GrupoID, TareaID, EstadoTarea) 
-VALUES (@GrupoTesoreriaID, 'Firma de balance anual', 'Pendiente');
-GO
 
 -- ============================================================================
 -- 5. CONSULTAS DE COMPROBACIÓN COMPLETAS

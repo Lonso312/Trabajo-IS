@@ -339,3 +339,24 @@ class MiembroDAO:
             return None
         finally:
             cursor.close()
+
+    def actualizar_contrasena(self, nombre_usuario, nueva_contrasena):
+        cursor = self.conexion.cursor()
+        sql = """
+            UPDATE LoginUsuario 
+            SET Contrasena = ? 
+            WHERE NombreUsuario = ?
+        """
+        try:
+            cursor.execute(sql, [str(nueva_contrasena).strip(), str(nombre_usuario).strip()])
+            self.conexion.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error en MiembroDAO.actualizar_contrasena: {e}")
+            try:
+                self.conexion.rollback()
+            except Exception:
+                pass
+            return False
+        finally:
+            cursor.close()

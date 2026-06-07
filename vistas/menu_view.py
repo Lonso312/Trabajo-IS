@@ -2,7 +2,7 @@
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QLabel, QPushButton, QFrame, QInputDialog, 
                              QDialog, QFormLayout, QLineEdit, QTextEdit, 
-                             QDialogButtonBox, QMessageBox)
+                             QDialogButtonBox, QMessageBox, QScrollArea) # 👈 Importado QScrollArea
 from PyQt5.QtCore import Qt
 
 # =================================================================
@@ -64,9 +64,9 @@ class MenuView(QMainWindow):
         # Estas referencias se inyectarán desde main.py tras inicializar la vista
         self.grupo_controller = None
         self.tarea_controller = None
-        self.bienes_controller = None  # Se inyectará dinámicamente
+        self.bienes_controller = None  
         
-        self.id_grupo_seleccionado = None  # Almacena el ID del grupo activo
+        self.id_grupo_seleccionado = None  
         self.tarjetas_izquierda = []  
         self.init_ui()
 
@@ -81,21 +81,40 @@ class MenuView(QMainWindow):
         main_layout.setContentsMargins(25, 20, 25, 25)
 
         # -------------------------------------------------------------
-        # 1. BARRA SUPERIOR (Información del Usuario y Botón Logout)
+        # 1. BARRA SUPERIOR (Información del Usuario, Cambio de Pass y Botones)
         # -------------------------------------------------------------
         top_bar = QHBoxLayout()
+        
+        user_info_layout = QVBoxLayout()
+        user_info_layout.setSpacing(4)
+        
         nombre_limpio = str(self.miembro.Name)
         rol_limpio = str(self.miembro.Rol)
         lbl_usuario = QLabel(f"{nombre_limpio} : {rol_limpio}")
-        
         lbl_usuario.setStyleSheet("font-size: 15px; font-weight: bold; color: #333333;")
-        top_bar.addWidget(lbl_usuario)
+        user_info_layout.addWidget(lbl_usuario)
         
-        top_bar.addStretch()  # Empuja los botones al extremo derecho
+        btn_cambiar_pass = QPushButton("Cambiar Contraseña")
+        btn_cambiar_pass.setCursor(Qt.PointingHandCursor)
+        btn_cambiar_pass.setStyleSheet("""
+            QPushButton {
+                background-color: #7F8C8D; 
+                color: white; 
+                font-weight: bold; 
+                font-size: 11px;
+                padding: 3px 8px; 
+                border-radius: 4px;
+                border: none;
+            }
+            QPushButton:hover { background-color: #95A5A6; }
+        """)
+        btn_cambiar_pass.clicked.connect(self.mostrar_dialogo_cambiar_pass)
+        user_info_layout.addWidget(btn_cambiar_pass)
         
-        # ----------------------------------------------------------------------
+        top_bar.addLayout(user_info_layout)
+        top_bar.addStretch()  
+        
         # VALIDACIÓN VISUAL DEL ROL Y BOTONES DE GESTIÓN ADMINISTRATIVA
-        # ----------------------------------------------------------------------
         rol_limpio_check = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
         self.es_admin = rol_limpio_check in ["PRESIDENTE", "JEFE DEPARTAMENTO"]
         
@@ -121,8 +140,7 @@ class MenuView(QMainWindow):
             top_bar.addWidget(self.btn_gestionar_miembros)
             top_bar.addSpacing(10) 
 
-        # BOTÓN NUEVO: Gestión de Bienes (Se ubica en la barra superior manteniendo el diseño limpio)
-        if rol_limpio_check in ["PRESIDENTE", "TESORERO"]:
+        if rol_limpio_check in ["PRESIDENTE", "TESORERO", "JEFE DEPARTAMENTO"]:
             self.btn_bienes = QPushButton("Inventario")
             self.btn_bienes.setCursor(Qt.PointingHandCursor)
             self.btn_bienes.setStyleSheet("""
@@ -170,10 +188,28 @@ class MenuView(QMainWindow):
         # -------------------------------------------------------------
         content_layout = QHBoxLayout()
         
-        # Panel Izquierdo (Contenedor vertical de tarjetas + Botón Crear Grupo)
-        self.left_layout = QVBoxLayout()
+        # 🔄 REESTRUCTURACIÓN: Área de scroll para el panel izquierdo
+        self.scroll_izquierda = QScrollArea()
+        self.scroll_izquierda.setWidgetResizable(True)
+        self.scroll_izquierda.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        
+        # Contenedor del contenido interno del scroll
+        self.widget_contenedor_izq = QWidget()
+        self.widget_contenedor_izq.setStyleSheet("background-color: transparent;")
+        self.left_layout = QVBoxLayout(self.widget_contenedor_izq)
+        self.left_layout.setContentsMargins(0, 0, 5, 0) # Margen derecho sutil para no tapar la barra
+        
+        # Cargamos las tarjetas en el layout
         self.cargar_grupos_izquierdos()
-        content_layout.addLayout(self.left_layout, stretch=2)  
+        
+        # Asignamos el widget al scroll y agregamos el scroll al layout principal
+        self.scroll_izquierda.setWidget(self.widget_contenedor_izq)
+        content_layout.addWidget(self.scroll_izquierda, stretch=2)  
 
         # Línea Divisora Central Estricta
         linea = QFrame()
@@ -190,7 +226,6 @@ class MenuView(QMainWindow):
         content_layout.addWidget(right_container, stretch=3)  
         main_layout.addLayout(content_layout)
 
-        # Mostrar mensaje de instrucciones iniciales al cargar la pantalla
         self.mostrar_mensaje_vacio()
 
     def cargar_grupos_izquierdos(self):
@@ -222,7 +257,6 @@ class MenuView(QMainWindow):
             self.btn_crear_grupo.clicked.connect(self.abrir_dialogo_crear_grupo)
             self.left_layout.addWidget(self.btn_crear_grupo)
 
-        # Iteración de mapeado para las tarjetas de grupos organizacionales
         for i, grupo in enumerate(self.lista_grupos):
             nombre_grupo = str(grupo['nombre'])
             cant_miembros = str(grupo['cantidad_miembros'])
@@ -235,7 +269,6 @@ class MenuView(QMainWindow):
                 es_verde=False
             )
             
-            # Si el grupo que estamos redibujando coincide con el seleccionado previamente, mantén el color verde activo
             if self.id_grupo_seleccionado and int(grupo['id']) == int(self.id_grupo_seleccionado):
                 tarjeta.marcar_activa(True)
 
@@ -266,12 +299,10 @@ class MenuView(QMainWindow):
 
         self.id_grupo_seleccionado = int(id_grupo)
 
-        # Conmutar estilos de las tarjetas izquierdas
         for tarjeta in self.tarjetas_izquierda:
             tarjeta.marcar_activa(activa=False)
         tarjeta_pulsada.marcar_activa(activa=True)
 
-        # Vaciar el panel derecho de tareas antiguas
         while self.right_layout.count():
             item = self.right_layout.takeAt(0)
             widget = item.widget()
@@ -298,7 +329,6 @@ class MenuView(QMainWindow):
             self.btn_crear_tarea.clicked.connect(self.abrir_dialogo_crear_tarea)
             self.right_layout.addWidget(self.btn_crear_tarea)
 
-        # Solicitud de datos limpios a través del controlador
         elementos_derechos = self.callback_cargar_tareas(id_grupo)
 
         for elemento in elementos_derechos:
@@ -342,6 +372,63 @@ class MenuView(QMainWindow):
     # =================================================================
     # VENTANAS MODALES EMERGENTES PARA LA ASIGNACIÓN DE CONTENIDO
     # =================================================================
+    def mostrar_dialogo_cambiar_pass(self):
+        """Muestra un diálogo modal para cambiar la contraseña del usuario actual."""
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle("Seguridad - Cambiar Contraseña")
+        dialogo.setMinimumWidth(360)
+        dialogo.setWindowFlags(dialogo.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        
+        layout_modal = QVBoxLayout(dialogo)
+        form = QFormLayout()
+        
+        txt_nueva_pass = QLineEdit()
+        txt_nueva_pass.setEchoMode(QLineEdit.Password)
+        txt_nueva_pass.setPlaceholderText("Mínimo 4 caracteres")
+        
+        txt_confirmar_pass = QLineEdit()
+        txt_confirmar_pass.setEchoMode(QLineEdit.Password)
+        txt_confirmar_pass.setPlaceholderText("Repita la nueva contraseña")
+        
+        form.addRow("Nueva Contraseña:", txt_nueva_pass)
+        form.addRow("Confirmar Contraseña:", txt_confirmar_pass)
+        layout_modal.addLayout(form)
+        
+        botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        botones.accepted.connect(dialogo.accept)
+        botones.rejected.connect(dialogo.reject)
+        layout_modal.addWidget(botones)
+        
+        if dialogo.exec_() == QDialog.Accepted:
+            nueva_pass = txt_nueva_pass.text().strip()
+            confirmar_pass = txt_confirmar_pass.text().strip()
+            
+            if len(nueva_pass) < 4:
+                QMessageBox.warning(self, "Validación", "La contraseña es demasiado corta (mínimo 4 caracteres).")
+                return
+                
+            if nueva_pass != confirmar_pass:
+                QMessageBox.warning(self, "Validación", "Las contraseñas no coinciden. Inténtelo de nuevo.")
+                return
+            
+            conexion_activa = None
+            if hasattr(self, 'grupo_controller') and self.grupo_controller and self.grupo_controller.grupo_dao:
+                conexion_activa = self.grupo_controller.grupo_dao.conexion
+            elif hasattr(self, 'tarea_controller') and self.tarea_controller and self.tarea_controller.tarea_dao:
+                conexion_activa = self.tarea_controller.tarea_dao.conexion
+                
+            if conexion_activa:
+                from DAO.MiembroDAO import MiembroDAO
+                dao_aux = MiembroDAO(conexion_activa)
+                
+                exito = dao_aux.actualizar_contrasena(self.miembro.NombreUsuario, nueva_pass)
+                if exito:
+                    QMessageBox.information(self, "Éxito", "Su contraseña ha sido actualizada correctamente.")
+                else:
+                    QMessageBox.critical(self, "Error", "No se pudo actualizar la contraseña (verifique el registro).")
+            else:
+                QMessageBox.critical(self, "Error de Sistema", "No se detectó una conexión activa con la base de datos.")
+
     def abrir_dialogo_crear_grupo(self):
         if not self.grupo_controller:
             QMessageBox.critical(self, "Error de Sistema", "El controlador de grupos no se encuentra vinculado.")
@@ -424,10 +511,6 @@ class MenuView(QMainWindow):
                 QMessageBox.critical(self, "Error en el Proceso", mensaje)
 
     def refrescar_grupos(self):
-        """
-        Vuelve a consultar los grupos del usuario en la base de datos 
-        y rellama a la función de renderizado para actualizar la interfaz.
-        """
         if hasattr(self, 'grupo_controller') and self.grupo_controller:
             nuevos_grupos = self.grupo_controller.obtener_grupos_usuario(
                 self.miembro.UsuarioID, self.miembro.Rol
@@ -441,7 +524,6 @@ class MenuView(QMainWindow):
                         break
 
     def abrir_modulo_bienes(self):
-        """Método puente para abrir la pantalla de bienes desde el controlador inyectado"""
         if hasattr(self, 'bienes_controller') and self.bienes_controller:
             self.bienes_controller.abrir_pantalla_bienes()
         else:
