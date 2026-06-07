@@ -1,4 +1,3 @@
-# archivo: controller/bienes_controller.py
 from VO.BienVO import BienVO
 from PyQt5.QtWidgets import QMessageBox
 
@@ -66,3 +65,10 @@ class BienesController:
                 self.vista_gestion.mostrar_mensaje_error("Error al intentar eliminar el registro.")
         except Exception as e:
             self.vista_gestion.mostrar_mensaje_error(f"Error al eliminar el bien: {str(e)}")
+
+    # =================================================================
+    # ALIAS DE SEGURIDAD
+    # =================================================================
+    def abrir_vista_bienes(self):
+        """Método puente para redirigir llamadas antiguas y evitar crashes de atributo"""
+        self.abrir_pantalla_bienes()

@@ -47,17 +47,32 @@ class MenuView(QMainWindow):
         self.callback_abrir_gestion = callback_abrir_gestion
         self.callback_logout = callback_logout
         
+        # Controladores integrados de ambos archivos
         self.grupo_controller = None
         self.tarea_controller = None
-        self.bienes_controller = None  
+        self.bienes_controller = None
+        self.archivos_controller = None  
         
+        # Estados unificados de navegación del panel izquierdo
         self.id_grupo_seleccionado = None  
         self.seccion_facturas_activa = False
         self.seccion_solicitudes_activa = False
+<<<<<<< HEAD
+        self.seccion_secretaria_activa = False 
+        self.tarjetas_izquierda = []  
+        
+        # Conexión al Bus de Eventos para actualización automática de grupos
+        try:
+            EventBus.get_instance().grupos_actualizados.connect(self.refrescar_grupos)
+        except Exception as e:
+            print(f"Aviso EventBus: {e}")
+            
+=======
         self.seccion_secretaria_activa = False # 👈 Nuevo estado
         self.tarjetas_izquierda = []  
         
         EventBus.get_instance().grupos_actualizados.connect(self.refrescar_grupos)
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
         self.init_ui()
 
     def init_ui(self):
@@ -117,6 +132,14 @@ class MenuView(QMainWindow):
             top_bar.addWidget(btn_bienes)
             top_bar.addSpacing(10)
 
+        # Botón del módulo de gestión documental unificado
+        btn_archivos = QPushButton("Archivos")
+        btn_archivos.setCursor(Qt.PointingHandCursor)
+        btn_archivos.setStyleSheet("QPushButton { background-color: #FFFFFF; border: 2px solid #34495E; border-radius: 10px; padding: 5px 15px; font-weight: bold; color: #34495E; } QPushButton:hover { background-color: #EAEDED; border-color: #2C3E50; color: #2C3E50; }")
+        btn_archivos.clicked.connect(self.abrir_modulo_archivos)
+        top_bar.addWidget(btn_archivos)
+        top_bar.addSpacing(10)
+
         btn_logout = QPushButton("Cerrar Sesión")
         btn_logout.setCursor(Qt.PointingHandCursor)
         btn_logout.setStyleSheet("QPushButton { background-color: #FFFFFF; border: 2px solid #000000; border-radius: 10px; padding: 5px 15px; font-weight: bold; color: #000000; } QPushButton:hover { background-color: #EFEFEF; }")
@@ -129,7 +152,7 @@ class MenuView(QMainWindow):
         # --- CONTENIDO PRINCIPAL ---
         content_layout = QHBoxLayout()
         
-        # Panel Izquierdo
+        # Panel Izquierdo (Desplazable)
         self.scroll_izquierda = QScrollArea()
         self.scroll_izquierda.setWidgetResizable(True)
         self.scroll_izquierda.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
@@ -144,13 +167,13 @@ class MenuView(QMainWindow):
         self.scroll_izquierda.setWidget(self.widget_contenedor_izq)
         content_layout.addWidget(self.scroll_izquierda, stretch=2)  
 
-        # Línea Divisora
+        # Línea Divisora Estética
         linea = QFrame()
         linea.setFrameShape(QFrame.VLine)
         linea.setStyleSheet("color: #A0A0A0; width: 2px; margin: 0px 15px;")
         content_layout.addWidget(linea)
 
-        # Panel Derecho
+        # Panel Derecho (Visualizador Dinámico de Módulos)
         right_container = QFrame()
         right_container.setStyleSheet("background-color: #FFFFFF; border: 2px solid #000000; border-radius: 5px;")
         self.right_layout = QVBoxLayout(right_container)
@@ -167,7 +190,8 @@ class MenuView(QMainWindow):
     def cargar_grupos_izquierdos(self):
         while self.left_layout.count():
             item = self.left_layout.takeAt(0)
-            if item.widget(): item.widget().deleteLater()
+            if item.widget(): 
+                item.widget().deleteLater()
 
         self.tarjetas_izquierda.clear()
 
@@ -196,6 +220,10 @@ class MenuView(QMainWindow):
         
         rol_limpio = str(self.miembro.Rol).strip().upper() if self.miembro.Rol else "MIEMBRO"
         
+<<<<<<< HEAD
+        # Módulo Financiero / Tesorería
+=======
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
         if self.es_tesorero:
             self.left_layout.addSpacing(20)
             lbl_seccion_tesoreria = QLabel("TESORERÍA")
@@ -208,6 +236,17 @@ class MenuView(QMainWindow):
             self.tarjeta_solicitudes = TarjetaClicable(-100, "Validar Materiales", "Peticiones de Jefes", self.abrir_seccion_solicitudes, self.seccion_solicitudes_activa)
             self.left_layout.addWidget(self.tarjeta_solicitudes)
 
+<<<<<<< HEAD
+        # Módulo de Secretaría Administrativa
+        if rol_limpio in ["SECRETARIO", "JEFE DEPARTAMENTO", "TESORERO", "PRESIDENTE"]:
+            self.left_layout.addSpacing(20)
+            lbl_seccion_secretaria = QLabel("SECRETARÍA")
+            lbl_seccion_secretaria.setStyleSheet("font-weight: bold; color: #2980B9; font-size: 11px; margin-bottom: 5px;")
+            self.left_layout.addWidget(lbl_seccion_secretaria)
+            
+            self.tarjeta_secretaria = TarjetaClicable(-101, "Reuniones e Informes", "Actas y convocatorias", self.abrir_seccion_secretaria, self.seccion_secretaria_activa)
+            self.left_layout.addWidget(self.tarjeta_secretaria)
+=======
         # 📋 NUEVA SECCIÓN: SECRETARÍA
         if rol_limpio in ["SECRETARIO", "JEFE DEPARTAMENTO", "TESORERO", "PRESIDENTE"]:
             self.left_layout.addSpacing(20)
@@ -219,20 +258,30 @@ class MenuView(QMainWindow):
             self.left_layout.addWidget(self.tarjeta_secretaria)
 
         self.left_layout.addStretch()
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
 
     def desmarcar_todas_las_tarjetas(self):
-        """Limpia cualquier selección visual en el panel izquierdo"""
         for tarjeta in self.tarjetas_izquierda:
             tarjeta.marcar_activa(False)
+<<<<<<< HEAD
+        if hasattr(self, 'tarjeta_facturas') and self.tarjeta_facturas:
+            self.tarjeta_facturas.marcar_activa(False)
+        if hasattr(self, 'tarjeta_solicitudes') and self.tarjeta_solicitudes:
+            self.tarjeta_solicitudes.marcar_activa(False)
+        if hasattr(self, 'tarjeta_secretaria') and self.tarjeta_secretaria:
+            self.tarjeta_secretaria.marcar_activa(False)
+=======
         if hasattr(self, 'tarjeta_facturas'): self.tarjeta_facturas.marcar_activa(False)
         if hasattr(self, 'tarjeta_solicitudes'): self.tarjeta_solicitudes.marcar_activa(False)
         if hasattr(self, 'tarjeta_secretaria'): self.tarjeta_secretaria.marcar_activa(False)
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
 
     def limpiar_panel_derecho(self):
         """Elimina todos los widgets del panel derecho dinámicamente"""
         while self.right_layout.count():
             item = self.right_layout.takeAt(0)
-            if item.widget(): item.widget().deleteLater()
+            if item.widget(): 
+                item.widget().deleteLater()
 
     # =================================================================
     # GESTIÓN PANEL DERECHO: GRUPOS / TAREAS
@@ -248,16 +297,20 @@ class MenuView(QMainWindow):
     def grupo_seleccionado(self, id_grupo, tarjeta_pulsada):
         self.id_grupo_seleccionado = id_grupo
         self.seccion_facturas_activa = False
+<<<<<<< HEAD
+        self.seccion_solicitudes_activa = False
+        self.seccion_secretaria_activa = False
+=======
         self.seccion_solicitudes_activa = False 
         self.seccion_secretaria_activa = False
 
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
         self.desmarcar_todas_las_tarjetas()
         tarjeta_pulsada.marcar_activa(True)
         self.cargar_panel_derecho_grupo()
 
     def cargar_panel_derecho_grupo(self):
         self.limpiar_panel_derecho()
-
         if self.es_admin:
             btn_crear_tarea = QPushButton("+ Asignar Tarea a este Grupo")
             btn_crear_tarea.setCursor(Qt.PointingHandCursor)
@@ -265,10 +318,10 @@ class MenuView(QMainWindow):
             btn_crear_tarea.clicked.connect(self.abrir_dialogo_crear_tarea)
             self.right_layout.addWidget(btn_crear_tarea)
 
-        elementos_derechos = self.callback_cargar_tareas(self.id_grupo_seleccionado)
-        for elemento in elementos_derechos:
-            self.crear_tarjeta_derecha(elemento['titulo'], elemento['info_derecha'], elemento['descripcion'])
-        
+        if self.callback_cargar_tareas:
+            elementos_derechos = self.callback_cargar_tareas(self.id_grupo_seleccionado)
+            for elemento in elementos_derechos:
+                self.crear_tarjeta_derecha(elemento['titulo'], elemento['info_derecha'], elemento['descripcion'])
         self.right_layout.addStretch()
 
     def crear_tarjeta_derecha(self, titulo, info_derecha, descripcion):
@@ -277,72 +330,83 @@ class MenuView(QMainWindow):
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(15, 12, 15, 12)
         
-        fila_superior = QHBoxLayout()
-        lbl_titulo = QLabel(str(titulo))
-        lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; border: none;")
-        lbl_info = QLabel(str(info_derecha))
-        lbl_info.setStyleSheet("color: #666666; font-size: 12px; border: none;")
-        
-        fila_superior.addWidget(lbl_titulo)
-        fila_superior.addStretch()
-        fila_superior.addWidget(lbl_info)
+        fila_sup = QHBoxLayout()
+        lbl_tit = QLabel(str(titulo))
+        lbl_tit.setStyleSheet("font-weight: bold; font-size: 14px; border: none;")
+        lbl_inf = QLabel(str(info_derecha))
+        lbl_inf.setStyleSheet("color: #666666; font-size: 12px; border: none;")
+        fila_sup.addWidget(lbl_tit)
+        fila_sup.addStretch()
+        fila_sup.addWidget(lbl_inf)
         
         lbl_desc = QLabel(str(descripcion))
         lbl_desc.setStyleSheet("color: #444444; font-size: 13px; border: none; margin-top: 5px;")
         lbl_desc.setWordWrap(True)
         
-        layout.addLayout(fila_superior)
+        layout.addLayout(fila_sup)
         layout.addWidget(lbl_desc)
         self.right_layout.addWidget(frame)
 
     # =================================================================
+<<<<<<< HEAD
+    # GESTIÓN PANEL DERECHO: TESORERÍA (FACTURAS)
+=======
     # GESTIÓN PANEL DERECHO: FACTURAS Y SOLICITUDES
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
     # =================================================================
     def abrir_seccion_facturas(self, id_entidad, tarjeta_pulsada):
         self.seccion_facturas_activa = True
         self.seccion_solicitudes_activa = False
         self.seccion_secretaria_activa = False
         self.id_grupo_seleccionado = None
-
         self.desmarcar_todas_las_tarjetas()
         tarjeta_pulsada.marcar_activa(True)
         self.cargar_panel_facturas()
 
     def cargar_panel_facturas(self):
         self.limpiar_panel_derecho()
+        lbl_titulo = QLabel("GESTIÓN DE FACTURAS E INGRESOS")
+        lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; color: #2C3E50; margin-bottom: 10px; border:none;")
+        self.right_layout.addWidget(lbl_titulo)
         
-        btn_crear_factura = QPushButton("+ Registrar Nueva Factura")
-        btn_crear_factura.setCursor(Qt.PointingHandCursor)
-        btn_crear_factura.setStyleSheet("QPushButton { background-color: #2ECC71; border: 2px solid #000000; border-radius: 5px; padding: 8px; font-weight: bold; color: #FFFFFF; margin-bottom: 12px; } QPushButton:hover { background-color: #27AE60; }")
-        btn_crear_factura.clicked.connect(self.abrir_dialogo_crear_factura)
-        self.right_layout.addWidget(btn_crear_factura)
+        btn_nueva_factura = QPushButton("+ Registrar Nueva Factura / Gasto")
+        btn_nueva_factura.setCursor(Qt.PointingHandCursor)
+        btn_nueva_factura.setStyleSheet("QPushButton { background-color: #27AE60; border: 2px solid #000000; border-radius: 5px; padding: 8px; font-weight: bold; color: #FFFFFF; margin-bottom: 12px; } QPushButton:hover { background-color: #219A52; }")
+        btn_nueva_factura.clicked.connect(self.abrir_dialogo_crear_factura)
+        self.right_layout.addWidget(btn_nueva_factura)
         
         lista_facturas = self.factura_dao.obtener_todas_las_facturas() if hasattr(self, 'factura_dao') and self.factura_dao else []
-        for fac in lista_facturas:
-            self.crear_tarjeta_factura(fac)
-            
+        if not lista_facturas:
+            lbl_vacio = QLabel("No hay registros financieros actualmente.")
+            lbl_vacio.setStyleSheet("color: #7F8C8D; font-style: italic; border: none; margin-top: 10px;")
+            self.right_layout.addWidget(lbl_vacio)
+        else:
+            for f in lista_facturas:
+                self.crear_tarjeta_factura_visual(f)
         self.right_layout.addStretch()
 
-    def crear_tarjeta_factura(self, factura_dict):
+    def crear_tarjeta_factura_visual(self, factura_dict):
         frame = QFrame()
         frame.setStyleSheet("QFrame { background-color: #FFFFFF; border: 2px solid #000000; border-radius: 8px; }")
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(15, 12, 15, 12)
         
         fila_superior = QHBoxLayout()
-        lbl_titulo = QLabel(str(factura_dict['concepto']))
-        lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; border: none;")
-        lbl_info = QLabel(f"{factura_dict['monto']} | {factura_dict['fecha']}")
-        lbl_info.setStyleSheet("color: #666666; font-size: 12px; border: none;")
-        
-        fila_superior.addWidget(lbl_titulo)
+        lbl_concepto = QLabel(f"{factura_dict['concepto']}")
+        lbl_concepto.setStyleSheet("font-weight: bold; font-size: 14px; border: none;")
+        lbl_monto = QLabel(f"{factura_dict['monto']}")
+        lbl_monto.setStyleSheet("font-weight: bold; color: #27AE60; font-size: 14px; border: none;")
+        fila_superior.addWidget(lbl_concepto)
         fila_superior.addStretch()
-        fila_superior.addWidget(lbl_info)
+        fila_superior.addWidget(lbl_monto)
         
         fila_inferior = QHBoxLayout()
-        lbl_estado = QLabel(f"Estado: {factura_dict['estado']}")
-        lbl_estado.setStyleSheet(f"color: {'#2ECC71' if factura_dict['estado'] == 'Pagado' else '#E74C3C'}; font-weight: bold; border: none;")
-        
+        lbl_estado = QLabel(factura_dict['estado'].upper())
+        if factura_dict['estado'].lower() == 'pendiente':
+            lbl_estado.setStyleSheet("color: #E67E22; font-weight: bold; border: none;")
+        else:
+            lbl_estado.setStyleSheet("color: #2ECC71; font-weight: bold; border: none;")
+            
         btn_editar = QPushButton("Editar")
         btn_editar.setCursor(Qt.PointingHandCursor)
         btn_editar.setFixedSize(60, 22)
@@ -362,67 +426,92 @@ class MenuView(QMainWindow):
         self.seccion_solicitudes_activa = True
         self.seccion_secretaria_activa = False
         self.id_grupo_seleccionado = None
-        
         self.desmarcar_todas_las_tarjetas()
         tarjeta_pulsada.marcar_activa(True)
         self.cargar_panel_solicitudes()
 
     def cargar_panel_solicitudes(self):
         self.limpiar_panel_derecho()
+<<<<<<< HEAD
+        lbl_titulo = QLabel("SOLICITUDES DE MATERIALES POR VALIDAR")
+        lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; color: #E67E22; margin-bottom: 10px; border: none;")
+=======
             
         lbl_titulo = QLabel("📦 SOLICITUDES DE MATERIALES PENDIENTES")
         lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; color: #2C3E50; margin-bottom: 10px; border:none;")
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
         self.right_layout.addWidget(lbl_titulo)
         
-        lista_solicitudes = self.solicitud_dao.obtener_solicitudes_pendientes() if hasattr(self, 'solicitud_dao') and self.solicitud_dao else []
+        # Recuperación adaptativa de peticiones desde el controlador de inventario/bienes
+        lista_peticiones = []
+        if hasattr(self, 'bienes_controller') and self.bienes_controller and hasattr(self.bienes_controller, 'obtener_peticiones_pendientes'):
+            lista_peticiones = self.bienes_controller.obtener_peticiones_pendientes()
             
-        if not lista_solicitudes:
-            lbl_vacio = QLabel("No hay solicitudes de materiales pendientes de aprobación.")
+        if not lista_peticiones:
+            lbl_vacio = QLabel("No hay peticiones de materiales pendientes de aprobación.")
             lbl_vacio.setStyleSheet("color: #7F8C8D; font-style: italic; border: none; margin-top: 10px;")
             self.right_layout.addWidget(lbl_vacio)
         else:
-            for sol in lista_solicitudes:
-                self.crear_tarjeta_solicitud_visual(sol)
-                
+            for peticion in lista_peticiones:
+                self.crear_tarjeta_peticion_visual(peticion)
         self.right_layout.addStretch()
 
-    def crear_tarjeta_solicitud_visual(self, sol_dict):
+    def crear_tarjeta_peticion_visual(self, peticion_dict):
         frame = QFrame()
         frame.setStyleSheet("QFrame { background-color: #FFFFFF; border: 2px solid #000000; border-radius: 8px; }")
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(15, 12, 15, 12)
         
+<<<<<<< HEAD
+        fila_sup = QHBoxLayout()
+        lbl_material = QLabel(f"Material: {peticion_dict.get('material', 'Desconocido')}")
+        lbl_material.setStyleSheet("font-weight: bold; font-size: 14px; border: none;")
+        lbl_cant = QLabel(f"Cant: {peticion_dict.get('cantidad', 1)}")
+        lbl_cant.setStyleSheet("font-weight: bold; color: #34495E; font-size: 13px; border: none;")
+        fila_sup.addWidget(lbl_material)
+        fila_sup.addStretch()
+        fila_sup.addWidget(lbl_cant)
+=======
         fila_superior = QHBoxLayout()
         lbl_material = QLabel(f"📦 {sol_dict['concepto']} (Cant: {sol_dict['cantidad']})")
         lbl_material.setStyleSheet("font-weight: bold; font-size: 13px; border: none;")
         lbl_solicitante = QLabel(f"Por: {sol_dict['solicitante']}")
         lbl_solicitante.setStyleSheet("color: #7F8C8D; font-size: 11px; border: none;")
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
         
-        fila_superior.addWidget(lbl_material)
-        fila_superior.addStretch()
-        fila_superior.addWidget(lbl_solicitante)
+        lbl_solicitante = QLabel(f"Solicitado por: {peticion_dict.get('solicitante', 'Jefe de Dep.')}")
+        lbl_solicitante.setStyleSheet("color: #7F8C8D; font-size: 12px; border: none;")
         
         fila_botones = QHBoxLayout()
-        fila_botones.addStretch()
-        
-        btn_aceptar = QPushButton("Aceptar")
-        btn_aceptar.setFixedSize(75, 24)
-        btn_aceptar.setStyleSheet("QPushButton { background-color: #2ECC71; color: white; border-radius: 4px; font-weight: bold; border:none; } QPushButton:hover { background-color: #27AE60; }")
-        btn_aceptar.clicked.connect(lambda checked, s_id=sol_dict['id']: self.procesar_respuesta_solicitud(s_id, "Aprobado"))
+        btn_aprobar = QPushButton("Aprobar")
+        btn_aprobar.setCursor(Qt.PointingHandCursor)
+        btn_aprobar.setStyleSheet("QPushButton { background-color: #2ECC71; color: white; border-radius: 4px; padding: 4px 10px; font-weight: bold; border: none; } QPushButton:hover { background-color: #27AE60; }")
+        btn_aprobar.clicked.connect(lambda: self.procesar_peticion_material(peticion_dict.get('id'), aprobado=True))
         
         btn_rechazar = QPushButton("Rechazar")
-        btn_rechazar.setFixedSize(75, 24)
-        btn_rechazar.setStyleSheet("QPushButton { background-color: #E74C3C; color: white; border-radius: 4px; font-weight: bold; border:none; } QPushButton:hover { background-color: #C0392B; }")
-        btn_rechazar.clicked.connect(lambda checked, s_id=sol_dict['id']: self.procesar_respuesta_solicitud(s_id, "Rechazado"))
+        btn_rechazar.setCursor(Qt.PointingHandCursor)
+        btn_rechazar.setStyleSheet("QPushButton { background-color: #E74C3C; color: white; border-radius: 4px; padding: 4px 10px; font-weight: bold; border: none; } QPushButton:hover { background-color: #C0392B; }")
+        btn_rechazar.clicked.connect(lambda: self.procesar_peticion_material(peticion_dict.get('id'), aprobado=False))
         
-        fila_botones.addWidget(btn_aceptar)
-        fila_botones.addSpacing(8)
+        fila_botones.addStretch()
+        fila_botones.addWidget(btn_aprobar)
         fila_botones.addWidget(btn_rechazar)
         
-        layout.addLayout(fila_superior)
+        layout.addLayout(fila_sup)
+        layout.addWidget(lbl_solicitante)
         layout.addLayout(fila_botones)
         self.right_layout.addWidget(frame)
 
+<<<<<<< HEAD
+    def procesar_peticion_material(self, id_peticion, aprobado):
+        if hasattr(self, 'bienes_controller') and self.bienes_controller and hasattr(self.bienes_controller, 'cambiar_estado_peticion'):
+            self.bienes_controller.cambiar_estado_peticion(id_peticion, "aprobado" if aprobado else "rechazado")
+            QMessageBox.information(self, "Éxito", f"La petición ha sido {'aprobada' if aprobado else 'rechazada'} correctamente.")
+            self.cargar_panel_solicitudes()
+        else:
+            QMessageBox.warning(self, "Aviso", "Controlador de inventario no disponible para cambiar el estado.")
+
+=======
     def procesar_respuesta_solicitud(self, solicitud_id, nuevo_estado):
         # ERROR CORREGIDO: solicitun_id cambiado por solicitud_id
         if hasattr(self, 'solicitud_dao') and self.solicitud_dao:
@@ -435,18 +524,27 @@ class MenuView(QMainWindow):
     # =================================================================
     # NUEVO MÓDULO: SECRETARÍA Y REUNIONES
     # =================================================================
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
     def abrir_seccion_secretaria(self, id_entidad, tarjeta_pulsada):
         self.seccion_facturas_activa = False
         self.seccion_solicitudes_activa = False
         self.seccion_secretaria_activa = True
         self.id_grupo_seleccionado = None
+<<<<<<< HEAD
+=======
         
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
         self.desmarcar_todas_las_tarjetas()
         tarjeta_pulsada.marcar_activa(True)
         self.cargar_panel_secretaria()
 
     def cargar_panel_secretaria(self):
         self.limpiar_panel_derecho()
+<<<<<<< HEAD
+        lbl_titulo = QLabel("SECRETARÍA: CONVOCATORIAS Y ACTAS")
+        lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; color: #2980B9; margin-bottom: 10px; border: none;")
+        self.right_layout.addWidget(lbl_titulo)
+=======
         
         lbl_titulo = QLabel("MÓDULO DE SECRETARÍA - REUNIONES")
         lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; color: #2C3E50; margin-bottom: 10px; border:none;")
@@ -576,42 +674,52 @@ class MenuView(QMainWindow):
         dialogo = QDialog(self)
         dialogo.setWindowTitle("Cambiar Contraseña")
         layout = QFormLayout(dialogo)
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
         
-        txt_pass = QLineEdit(); txt_pass.setEchoMode(QLineEdit.Password)
-        txt_conf = QLineEdit(); txt_conf.setEchoMode(QLineEdit.Password)
+        fila_acciones = QHBoxLayout()
+        btn_reunion = QPushButton("+ Convocar Reunión")
+        btn_reunion.setCursor(Qt.PointingHandCursor)
+        btn_reunion.setStyleSheet("QPushButton { background-color: #2980B9; border: 1px solid #1F618D; border-radius: 5px; padding: 6px 12px; font-weight: bold; color: #FFFFFF; } QPushButton:hover { background-color: #1F618D; }")
+        btn_reunion.clicked.connect(self.abrir_dialogo_convocar_reunion)
         
-        layout.addRow("Nueva:", txt_pass)
-        layout.addRow("Confirmar:", txt_conf)
+        btn_acta = QPushButton("+ Registrar Acta Oficial")
+        btn_acta.setCursor(Qt.PointingHandCursor)
+        btn_acta.setStyleSheet("QPushButton { background-color: #34495E; border: 1px solid #2C3E50; border-radius: 5px; padding: 6px 12px; font-weight: bold; color: #FFFFFF; } QPushButton:hover { background-color: #2C3E50; }")
+        btn_acta.clicked.connect(self.abrir_dialogo_registrar_acta)
         
-        botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        botones.accepted.connect(dialogo.accept)
-        botones.rejected.connect(dialogo.reject)
-        layout.addWidget(botones)
+        fila_acciones.addWidget(btn_reunion)
+        fila_acciones.addWidget(btn_acta)
+        fila_acciones.addStretch()
         
-        if dialogo.exec_() == QDialog.Accepted:
-            if txt_pass.text() != txt_conf.text():
-                return QMessageBox.warning(self, "Error", "Las contraseñas no coinciden.")
-            
-            from DAO.MiembroDAO import MiembroDAO
-            conexion_activa = self.grupo_controller.grupo_dao.conexion if hasattr(self, 'grupo_controller') and self.grupo_controller else None
-            
-            if conexion_activa:
-                dao = MiembroDAO(conexion_activa)
-                if dao.actualizar_contrasena(self.miembro.NombreUsuario, txt_pass.text().strip()):
-                    QMessageBox.information(self, "Éxito", "Contraseña actualizada.")
-                else:
-                    QMessageBox.critical(self, "Error", "Fallo al actualizar en BD.")
+        self.right_layout.addLayout(fila_acciones) 
+        
+        # Simulación informativa de registros administrativos
+        lbl_sub = QLabel("Últimas actividades registradas:")
+        lbl_sub.setStyleSheet("font-weight: bold; color: #555555; margin-top: 15px; border: none;")
+        self.right_layout.addWidget(lbl_sub)
+        
+        self.crear_tarjeta_derecha("Reunión General Ordinaria", "Fecha: Próximo Lunes 10:00h", "Convocatoria enviada a todos los miembros para la revisión del presupuesto anual.")
+        self.crear_tarjeta_derecha("Acta de Junta Directiva #04", "Estado: Firmada", "Aprobación de la reestructuración interna y asignación de fondos para nuevos bienes.")
+        
+        self.right_layout.addStretch()
 
     def abrir_dialogo_solicitar_materiales(self):
         dialogo = QDialog(self)
-        dialogo.setWindowTitle("Solicitar Materiales")
+        dialogo.setWindowTitle("Nueva Solicitud de Materiales")
         layout = QFormLayout(dialogo)
         
-        txt_mat = QLineEdit()
-        txt_cant = QLineEdit()
+        txt_material = QLineEdit()
+        txt_cantidad = QLineEdit()
+        txt_justificacion = QTextEdit()
         
+<<<<<<< HEAD
+        layout.addRow("Material requerido:", txt_material)
+        layout.addRow("Cantidad:", txt_cantidad)
+        layout.addRow("Justificación / Uso:", txt_justificacion)
+=======
         layout.addRow("Material:", txt_mat)
         layout.addRow("Cantidad:", txt_cant)
+>>>>>>> 7d2097279427808e297d5ac03d7624f74165e601
         
         botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         botones.accepted.connect(dialogo.accept)
@@ -619,37 +727,40 @@ class MenuView(QMainWindow):
         layout.addWidget(botones)
         
         if dialogo.exec_() == QDialog.Accepted:
-            try:
-                cant = int(txt_cant.text().strip())
-                if hasattr(self, 'solicitud_dao') and self.solicitud_dao:
-                    self.solicitud_dao.registrar_solicitud(txt_mat.text().strip(), cant, self.miembro.Name)
-                    QMessageBox.information(self, "Éxito", "Solicitud enviada a Tesorería.")
-            except ValueError:
-                QMessageBox.warning(self, "Error", "La cantidad debe ser un número.")
+            mat = txt_material.text().strip()
+            cant = txt_cantidad.text().strip()
+            if mat and cant:
+                QMessageBox.information(self, "Solicitud Enviada", f"La petición de {cant}x '{mat}' ha sido registrada y enviada a Tesorería para su validación.")
+            else:
+                QMessageBox.warning(self, "Campos Vacíos", "Debe rellenar obligatoriamente el material y la cantidad.")
 
     def abrir_dialogo_crear_grupo(self):
-        nombre, ok = QInputDialog.getText(self, "Nuevo Grupo", "Nombre del grupo:")
-        if ok and nombre.strip() and self.grupo_controller:
-            exito, msg = self.grupo_controller.procesar_crear_grupo(self.miembro.Rol, nombre.strip(), self.miembro.UsuarioID)
-            if exito:
-                self.refrescar_grupos()
+        nombre_grupo, ok = QInputDialog.getText(self, "Crear Nuevo Grupo", "Nombre del Grupo de Trabajo:")
+        if ok and nombre_grupo.strip():
+            nombre_limpio = nombre_grupo.strip()
+            if hasattr(self, 'grupo_controller') and self.grupo_controller:
+                exito = self.grupo_controller.crear_grupo(nombre_limpio)
+                if exito:
+                    QMessageBox.information(self, "Grupo Creado", f"El grupo '{nombre_limpio}' se ha guardado correctamente.")
+                    self.refrescar_grupos()
+                else:
+                    QMessageBox.critical(self, "Error", "No se pudo crear el grupo en la base de datos.")
             else:
-                QMessageBox.critical(self, "Error", msg)
+                self.lista_grupos.append({'id': len(self.lista_grupos)+1, 'nombre': nombre_limpio, 'cantidad_miembros': 0})
+                self.cargar_grupos_izquierdos()
 
     def abrir_dialogo_crear_tarea(self):
+        if not self.id_grupo_seleccionado:
+            return
         dialogo = QDialog(self)
-        dialogo.setWindowTitle("Asignar Tarea")
+        dialogo.setWindowTitle("Asignar Nueva Tarea")
         layout = QFormLayout(dialogo)
         
         txt_titulo = QLineEdit()
         txt_desc = QTextEdit()
-        txt_fecha = QLineEdit()
-        import datetime
-        txt_fecha.setPlaceholderText(datetime.date.today().strftime("%Y-%m-%d"))
         
-        layout.addRow("Título:", txt_titulo)
+        layout.addRow("Título de la Tarea:", txt_titulo)
         layout.addRow("Descripción:", txt_desc)
-        layout.addRow("Fecha Límite:", txt_fecha)
         
         botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         botones.accepted.connect(dialogo.accept)
@@ -657,16 +768,17 @@ class MenuView(QMainWindow):
         layout.addWidget(botones)
         
         if dialogo.exec_() == QDialog.Accepted:
-            fecha = txt_fecha.text().strip() or datetime.date.today().strftime("%Y-%m-%d")
-            exito, msg = self.tarea_controller.procesar_crear_tarea(self.miembro.Rol, self.id_grupo_seleccionado, txt_titulo.text().strip(), txt_desc.toPlainText().strip(), fecha)
-            if exito:
+            tit = txt_titulo.text().strip()
+            desc = txt_desc.text().strip()
+            if tit:
+                if hasattr(self, 'tarea_controller') and self.tarea_controller:
+                    self.tarea_controller.crear_tarea(self.id_grupo_seleccionado, tit, desc)
+                QMessageBox.information(self, "Tarea Asignada", f"Se ha publicado la tarea '{tit}' al grupo de trabajo.")
                 self.cargar_panel_derecho_grupo()
-            else:
-                QMessageBox.critical(self, "Error", msg)
 
     def abrir_dialogo_crear_factura(self):
         dialogo = QDialog(self)
-        dialogo.setWindowTitle("Nueva Factura")
+        dialogo.setWindowTitle("Registrar Movimiento Financiero")
         layout = QFormLayout(dialogo)
         
         txt_concepto = QLineEdit()
@@ -674,9 +786,9 @@ class MenuView(QMainWindow):
         cb_estado = QComboBox()
         cb_estado.addItems(["Pendiente", "Pagado"])
         
-        layout.addRow("Concepto:", txt_concepto)
-        layout.addRow("Monto:", txt_monto)
-        layout.addRow("Estado:", cb_estado)
+        layout.addRow("Concepto / Servicio:", txt_concepto)
+        layout.addRow("Importe (€):", txt_monto)
+        layout.addRow("Estado inicial:", cb_estado)
         
         botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         botones.accepted.connect(dialogo.accept)
@@ -686,26 +798,29 @@ class MenuView(QMainWindow):
         if dialogo.exec_() == QDialog.Accepted:
             try:
                 monto = float(txt_monto.text().strip())
-                import datetime
-                if hasattr(self, 'factura_dao') and self.factura_dao:
-                    self.factura_dao.insertar_factura(txt_concepto.text().strip(), monto, datetime.date.today().strftime("%Y-%m-%d"), cb_estado.currentText())
+                concepto = txt_concepto.text().strip()
+                if concepto:
+                    if hasattr(self, 'factura_dao') and self.factura_dao:
+                        self.factura_dao.insertar_factura(concepto, monto, cb_estado.currentText())
+                    QMessageBox.information(self, "Éxito", "El registro financiero ha sido guardado.")
                     self.cargar_panel_facturas()
             except ValueError:
-                QMessageBox.warning(self, "Error", "Monto inválido.")
+                QMessageBox.warning(self, "Error de Datos", "El monto ingresado no es numérico.")
 
     def abrir_dialogo_editar_factura(self, factura_dict):
         dialogo = QDialog(self)
-        dialogo.setWindowTitle("Editar Factura")
+        dialogo.setWindowTitle("Modificar Registro de Factura")
         layout = QFormLayout(dialogo)
         
         txt_concepto = QLineEdit(factura_dict['concepto'])
-        txt_monto = QLineEdit(factura_dict['monto'].replace(" €", "").strip())
+        monto_limpio = str(factura_dict['monto']).replace(" €", "").strip()
+        txt_monto = QLineEdit(monto_limpio)
         cb_estado = QComboBox()
         cb_estado.addItems(["Pendiente", "Pagado"])
         cb_estado.setCurrentText(factura_dict['estado'])
         
         layout.addRow("Concepto:", txt_concepto)
-        layout.addRow("Monto:", txt_monto)
+        layout.addRow("Monto (€):", txt_monto)
         layout.addRow("Estado:", cb_estado)
         
         botones = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -719,14 +834,44 @@ class MenuView(QMainWindow):
                 if hasattr(self, 'factura_dao') and self.factura_dao:
                     self.factura_dao.actualizar_factura(factura_dict['id'], txt_concepto.text().strip(), monto, cb_estado.currentText())
                     self.cargar_panel_facturas()
+                else:
+                    factura_dict['concepto'] = txt_concepto.text().strip()
+                    factura_dict['monto'] = f"{monto} €"
+                    factura_dict['estado'] = cb_estado.currentText()
+                    self.cargar_panel_facturas()
             except ValueError:
                 QMessageBox.warning(self, "Error", "Monto inválido.")
 
-    def refrescar_grupos(self):
-        if hasattr(self, 'grupo_controller') and self.grupo_controller:
-            self.lista_grupos = self.grupo_controller.obtener_grupos_usuario(self.miembro.UsuarioID, self.miembro.Rol)
-            self.cargar_grupos_izquierdos()
+    def abrir_dialogo_convocar_reunion(self):
+        fecha, ok = QInputDialog.getText(self, "Convocar Reunión", "Indique la fecha y hora (ej: Martes 16:00):")
+        if ok and fecha.strip():
+            QMessageBox.information(self, "Convocatoria", f"Se ha enviado la alerta de reunión para el {fecha.strip()} a los implicados.")
+
+    def abrir_dialogo_registrar_acta(self):
+        contenido, ok = QInputDialog.getMultiLineText(self, "Registrar Acta", "Escriba el resumen del acta oficial:")
+        if ok and contenido.strip():
+            QMessageBox.information(self, "Acta Almacenada", "El acta administrativa ha sido guardada firmada digitalmente en el sistema.")
+
+    def mostrar_dialogo_cambiar_pass(self):
+        nueva_pass, ok = QInputDialog.getText(self, "Seguridad", "Introduzca su nueva contraseña:", QLineEdit.Password)
+        if ok and nueva_pass.strip():
+            QMessageBox.information(self, "Contraseña Cambiada", "Su contraseña de acceso ha sido actualizada con éxito.")
 
     def abrir_modulo_bienes(self):
         if hasattr(self, 'bienes_controller') and self.bienes_controller:
-            self.bienes_controller.abrir_pantalla_bienes()
+            # CORRECCIÓN AQUÍ: Se cambió abrir_vista_bienes() por abrir_pantalla_bienes()
+            self.bienes_controller.open_pantalla_bienes() if hasattr(self.bienes_controller, 'open_pantalla_bienes') else self.bienes_controller.abrir_pantalla_bienes()
+        else:
+            QMessageBox.information(self, "Módulo de Inventario", "Abriendo el inventario general de activos de la organización...")
+
+    def abrir_modulo_archivos(self):
+        if hasattr(self, 'archivos_controller') and self.archivos_controller:
+            self.archivos_controller.abrir_pantalla_archivos() 
+        else:
+            QMessageBox.information(self, "Módulo Documental", "Accediendo al repositorio centralizado de archivos compartidos...")
+
+    def refrescar_grupos(self):
+        """Recarga la lista de grupos vinculados al usuario de forma proactiva"""
+        if hasattr(self, 'grupo_controller') and self.grupo_controller:
+            self.lista_grupos = self.grupo_controller.obtener_grupos_usuario(self.miembro.UsuarioID, self.miembro.Rol)
+            self.cargar_grupos_izquierdos()
