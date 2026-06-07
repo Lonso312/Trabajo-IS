@@ -4,6 +4,7 @@ GO
 -- ============================================================================
 -- 1. CONTROL DE ELIMINACIÓN PREVIA (DROP TABLES INVERSO)
 -- ============================================================================
+DROP TABLE IF EXISTS SolicitudesMateriales;
 DROP TABLE IF EXISTS Organiza_Bien;
 DROP TABLE IF EXISTS Gestion_CuentaBanco;
 DROP TABLE IF EXISTS Organiza_FacturaTesorero;
