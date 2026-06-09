@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GestionMiembrosView</class>
+ <widget class="QWidget" name="GestionMiembrosView">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>950</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SGA - Gestión de Miembros Administrativos</string>
+  </property>
+  <property name="styleSheet">
+   <string>background-color: #F8F9FA; font-family: 'Segoe UI', Arial;</string>
+  </property>
+  <layout class="QHBoxLayout" name="layout_principal">
+   <property name="spacing"><number>20</number></property>
+   <property name="margins"><number>20</number></property>
+   <item>
+    <layout class="QVBoxLayout" name="panel_izquierdo">
+     <item>
+      <widget class="QLabel" name="lbl_titulo">
+       <property name="font"><font><pointSize>14</pointSize><bold>true</bold></font></property>
+       <property name="text"><string>Miembros Registrados</string></property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="layout_filtros">
+       <item>
+        <widget class="QLabel" name="lbl_filtrar"><property name="text"><string>Filtrar Estado:</string></property></widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cb_filtro_estado"/>
+       </item>
+       <item>
+        <widget class="QLabel" name="lbl_filtrar_depto"><property name="text"><string>Departamento:</string></property></widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cb_filtro_depto"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QTableWidget" name="tabla_miembros">
+       <property name="styleSheet"><string>background-color: white;</string></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="panel_derecho">
+     <property name="minimumSize"><size><width>320</width><height>0</height></size></property>
+     <property name="maximumSize"><size><width>320</width><height>16777215</height></size></property>
+     <property name="styleSheet"><string>background-color: white; border: 1px solid #E2E8F0; border-radius: 8px;</string></property>
+     <layout class="QVBoxLayout" name="layout_derecho">
+      <item>
+       <widget class="QLabel" name="lbl_perfil"><property name="font"><font><bold>true</bold></font></property><property name="text"><string>Ficha del Miembro</string></property></widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="layout_perfil_dinamico"/>
+      </item>
+      <item><spacer name="sp_m"><property name="orientation"><enum>Qt::Vertical</enum></property></spacer></item>
+      <item>
+       <widget class="QPushButton" name="btn_aceptar">
+        <property name="text"><string>✅ Aprobar Solicitud</string></property>
+        <property name="styleSheet"><string>background-color: #2ECC71; color: white; padding: 8px;</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_registrar">
+        <property name="text"><string>➕ Registrar Nuevo</string></property>
+        <property name="styleSheet"><string>background-color: #34495E; color: white; padding: 8px;</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_actualizar">
+        <property name="text"><string>✏️ Editar Ficha</string></property>
+        <property name="styleSheet"><string>background-color: #3498DB; color: white; padding: 8px;</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_eliminar">
+        <property name="text"><string>❌ Denegar / Eliminar</string></property>
+        <property name="styleSheet"><string>background-color: #E74C3C; color: white; padding: 8px;</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+</ui>
