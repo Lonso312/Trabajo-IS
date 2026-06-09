@@ -1,5 +1,4 @@
 import os
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 class ArchivosController:
     def __init__(self, archivos_dao, miembro_autenticado_vo):
@@ -36,37 +35,16 @@ class ArchivosController:
         try:
             nombre, contenido_bytes = self.archivos_dao.obtener_contenido_archivo(archivo_id)
             if not contenido_bytes:
-                QMessageBox.warning(self.vista_archivos, "Error", "No se pudo extraer el archivo de la Base de Datos.")
-                return
+                return None, None, "No se pudo extraer el archivo de la Base de Datos."
 
             nombre = str(nombre)
             if not nombre.lower().endswith(".pdf"):
                 nombre += ".pdf"
 
-            ruta, _ = QFileDialog.getSaveFileName(
-                self.vista_archivos if self.vista_archivos else None,
-                "Guardar Archivo PDF",
-                nombre,
-                "Archivos PDF (*.pdf)"
-            )
-
-            if ruta:
-                with open(ruta, "wb") as archivo_disco:
-                    archivo_disco.write(contenido_bytes)
-
-                QMessageBox.information(
-                    self.vista_archivos,
-                    "Éxito",
-                    f"Archivo PDF guardado con éxito en:\n{ruta}"
-                )
-                self.cargar_archivos()
-
+            return nombre, contenido_bytes, ""
+        
         except Exception as e:
-            QMessageBox.critical(
-                self.vista_archivos,
-                "Error",
-                f"Error crítico al guardar el PDF: {str(e)}"
-            )
+            return None, None, f"Error crítico al obtener el archivo: {str(e)}"
 
     def subir_nuevo_archivo(self, ruta_local, roles_permitidos):
         try:
@@ -85,13 +63,10 @@ class ArchivosController:
                 roles_guardar = str(roles_permitidos)
 
             if self.archivos_dao.guardar_archivo(nombre_archivo, tipo, contenido_bytes, roles_guardar):
-                QMessageBox.information(None, "Operación Exitosa", "El PDF se almacenó correctamente en la Base de Datos.")
                 self.cargar_archivos()
-                return True
+                return True, "El PDF se almacenó correctamente en la Base de Datos."
             else:
-                QMessageBox.critical(None, "Error", "Error interno en el DAO al guardar el archivo.")
-                return False
+                return False, "Error interno en el DAO al guardar el archivo."
 
         except Exception as e:
-            QMessageBox.critical(None, "Error", f"Error de lectura en el archivo local: {str(e)}")
-            return False
+            return False, f"Error de lectura en el archivo local: {str(e)}"
