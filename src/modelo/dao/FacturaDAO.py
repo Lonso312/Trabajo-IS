@@ -1,5 +1,6 @@
 # archivo: DAO/FacturaDAO.py
 from VO.factura_vo import FacturaVO
+
 class FacturaDAO:
     def __init__(self, conexion_db):
         self.conexion = conexion_db
