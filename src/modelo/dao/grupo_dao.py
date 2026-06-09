@@ -80,3 +80,10 @@ class GrupoDAO:
             return False
         finally:
             cursor.close()
+    
+    def obtener_nombres_grupos(self):
+        cursor = self.conexion.cursor()
+        cursor.execute("SELECT Name FROM Grupos ORDER BY Name ASC")
+        filas = cursor.fetchall()
+        cursor.close()
+        return [str(f[0]).strip() for f in filas if f[0]]
