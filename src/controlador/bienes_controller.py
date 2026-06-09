@@ -1,6 +1,5 @@
 # archivo: controller/bienes_controller.py
 from VO.BienVO import BienVO
-from PyQt5.QtWidgets import QMessageBox
 
 class BienesController:
     def __init__(self, bienes_dao, miembro_autenticado_vo):
@@ -11,8 +10,7 @@ class BienesController:
     def abrir_pantalla_bienes(self):
         # Control estricto de accesos según la jerarquía solicitada
         if self.usuario_actual.Rol not in ['PRESIDENTE', 'TESORERO', 'JEFE DEPARTAMENTO']:
-            QMessageBox.critical(None, "Acceso Denegado", "Solo Tesoreros o Presidentes pueden gestionar los bienes.")
-            return
+            return False, "Solo Tesoreros o Presidentes pueden gestionar los bienes."
     
         from vistas.gestion_bienes_view import GestionBienesView
         self.vista_gestion = GestionBienesView(self)
