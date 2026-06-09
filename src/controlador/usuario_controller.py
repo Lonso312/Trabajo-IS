@@ -52,12 +52,8 @@ class UsuarioController:
     def obtener_listados_para_edicion(self, miembro_vo):
         """Devuelve los catálogos completos de la organización disponibles para asignar"""
         cat_departamentos = self.departamento_dao.obtener_todos_los_tipos()
-        cat_grupos = self.miembro_dao.conexion.cursor()
         
-        cat_grupos.execute("SELECT Name FROM Grupos ORDER BY Name ASC")
-        filas = cat_grupos.fetchall()
-        lista_grupos_limpios = [str(f[0]).strip() for f in filas if f[0]]
-        cat_grupos.close()
+        lista_grupos_limpios = self.grupo_dao.obtener_nombres_grupos()
         
         return cat_departamentos, lista_grupos_limpios
 
