@@ -6,4 +6,4 @@ class FacturaController:
         self.vista_factura = None
 
     # Aquí se añadirán las funciones de negocio para facturas más adelante
-    
+
