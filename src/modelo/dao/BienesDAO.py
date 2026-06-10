@@ -1,5 +1,5 @@
 # archivo: DAO/BienesDAO.py
-from VO.BienVO import BienVO
+from  modelo.vo.BienVO import BienVO
 
 class BienesDAO:
     def __init__(self, conexion_db):

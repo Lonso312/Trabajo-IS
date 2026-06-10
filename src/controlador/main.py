@@ -2,28 +2,27 @@
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from PyQt5.QtWidgets import QApplication
-from database.Conexion import obtener_conexion
+from modelo.conexion.Conexion import obtener_conexion
 
-
-from DAO.MiembroDAO import MiembroDAO
-from DAO.grupo_dao import GrupoDAO
-from DAO.tarea_dao import TareaDAO
-from DAO.departamentoDAO import DepartamentoDAO
-from DAO.BienesDAO import BienesDAO
-from DAO.FacturaDAO import FacturaDAO
-from DAO.SolicitudDAO import SolicitudDAO
-from DAO.SecretariaDAO import SecretariaDAO
+from modelo.dao.MiembroDAO import MiembroDAO
+from modelo.dao.grupo_dao import GrupoDAO
+from modelo.dao.tarea_dao import TareaDAO
+from modelo.dao.departamentoDAO import DepartamentoDAO
+from modelo.dao.BienesDAO import BienesDAO
+from modelo.dao.FacturaDAO import FacturaDAO
+from modelo.dao.SolicitudDAO import SolicitudDAO
+from modelo.dao.SecretariaDAO import SecretariaDAO
 
 from vistas.login_view import LoginView
 from vistas.menu_view import MenuView
 
-from controller.tarea_controller import TareaController
-from controller.grupo_controller import GrupoController
-from controller.usuario_controller import UsuarioController
-from controller.bienes_controller import BienesController
+from controlador.tarea_controller import TareaController
+from controlador.grupo_controller import GrupoController
+from controlador.usuario_controller import UsuarioController
+from controlador.bienes_controller import BienesController
 
 
 class ControladorApp:

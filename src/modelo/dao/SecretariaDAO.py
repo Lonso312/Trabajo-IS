@@ -1,5 +1,5 @@
 # archivo: DAO/SecretariaDAO.py
-from VO.reunion_vo import ReunionSecretariaVO
+from modelo.vo.reunion_vo import ReunionSecretariaVO
 
 class SecretariaDAO:
     def __init__(self, conexion_db):

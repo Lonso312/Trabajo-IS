@@ -1,4 +1,4 @@
-from VO.grupo_vo import GrupoVO
+from modelo.vo.grupo_vo import GrupoVO
 
 class GrupoDAO:
     def __init__(self, conexion):

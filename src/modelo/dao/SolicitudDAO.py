@@ -1,5 +1,5 @@
 # archivo: DAO/SolicitudDAO.py
-from VO.solicitudCompra_vo import SolicitudMaterialVO
+from modelo.vo.solicitudCompra_vo import SolicitudMaterialVO
 class SolicitudDAO:
     def __init__(self, conexion_db):
         self.conexion = conexion_db

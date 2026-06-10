@@ -1,5 +1,5 @@
 # archivo: miembro_dao.py
-from VO.MiembroVO import MiembroVO
+from modelo.vo.MiembroVO import MiembroVO
 
 class MiembroDAO:
     def __init__(self, conexion_db):

@@ -1,5 +1,5 @@
 # archivo: dao/tarea_dao.py
-from VO.tarea_vo import TareaVO
+from modelo.vo.tarea_vo import TareaVO
 
 class TareaDAO:
     def __init__(self, conexion):
