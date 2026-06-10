@@ -1,5 +1,5 @@
 # archivo: controller/bienes_controller.py
-from VO.BienVO import BienVO
+from modelo.vo.BienVO import BienVO
 
 class BienesController:
     def __init__(self, bienes_dao, miembro_autenticado_vo):

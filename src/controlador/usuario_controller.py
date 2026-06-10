@@ -17,7 +17,7 @@ class UsuarioController:
             callback_aceptar=self.procesar_aceptar_miembro,
             callback_eliminar=self.procesar_eliminar_miembro,
             callback_actualizar=self.procesar_actualizar_miembro,
-            controller=self  
+            controller=self
         )
         todos_los_miembros = self.miembro_dao.obtener_miembros_para_gestion()
         self.vista_gestion.llenar_tabla_miembros(todos_los_miembros)

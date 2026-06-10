@@ -5,8 +5,8 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QDialogButtonBox, QMessageBox, QScrollArea, QComboBox) 
 from PyQt5.QtCore import Qt
 from utils.event_bus import EventBus
-from VO.reunion_vo import ReunionSecretariaVO
-from VO.factura_vo import FacturaVO
+from modelo.vo.reunion_vo import ReunionSecretariaVO
+from modelo.vo.factura_vo import FacturaVO
 
 class TarjetaClicable(QFrame):
     def __init__(self, id_entidad, titulo, sub_1, callback_click, es_verde=False, parent=None):
