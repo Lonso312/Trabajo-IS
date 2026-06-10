@@ -65,25 +65,25 @@
       <item><spacer name="sp_m"><property name="orientation"><enum>Qt::Vertical</enum></property></spacer></item>
       <item>
        <widget class="QPushButton" name="btn_aceptar">
-        <property name="text"><string>✅ Aprobar Solicitud</string></property>
+        <property name="text"><string> Aprobar Solicitud</string></property>
         <property name="styleSheet"><string>background-color: #2ECC71; color: white; padding: 8px;</string></property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btn_registrar">
-        <property name="text"><string>➕ Registrar Nuevo</string></property>
+        <property name="text"><string> Registrar Nuevo</string></property>
         <property name="styleSheet"><string>background-color: #34495E; color: white; padding: 8px;</string></property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btn_actualizar">
-        <property name="text"><string>✏️ Editar Ficha</string></property>
+        <property name="text"><string> Editar Ficha</string></property>
         <property name="styleSheet"><string>background-color: #3498DB; color: white; padding: 8px;</string></property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btn_eliminar">
-        <property name="text"><string>❌ Denegar / Eliminar</string></property>
+        <property name="text"><string> Denegar / Eliminar</string></property>
         <property name="styleSheet"><string>background-color: #E74C3C; color: white; padding: 8px;</string></property>
        </widget>
       </item>
