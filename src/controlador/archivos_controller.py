@@ -1,8 +1,6 @@
-import os
-
 class ArchivosController:
-    def __init__(self, archivos_dao, miembro_autenticado_vo):
-        self.archivos_dao = archivos_dao
+    def __init__(self, archivos_service, miembro_autenticado_vo):
+        self.service = archivos_service
         self.usuario_actual = miembro_autenticado_vo
         self.vista_archivos = None
 
@@ -12,61 +10,29 @@ class ArchivosController:
         self.cargar_archivos()
         self.vista_archivos.show()
 
-    # =================================================================
-    # ALIASES DE SEGURIDAD (Corrige incompatibilidades de nombres)
-    # =================================================================
     def mostrar_vista(self):
-        """Redirecciona al método de apertura real para evitar fallos de atributo"""
         self.abrir_pantalla_archivos()
 
     def abrir_gestion_documental(self):
-        """Redirecciona al método de apertura real para evitar fallos de atributo"""
         self.abrir_pantalla_archivos()
-    # =================================================================
 
     def cargar_archivos(self):
         if not self.vista_archivos:
             return
-        # Carga los archivos restringidos según el rol del miembro logueado
-        archivos_permitidos = self.archivos_dao.obtener_archivos_por_rol(self.usuario_actual.Rol)
-        self.vista_archivos.llenar_tabla_archivos(archivos_permitidos)
+        archivos = self.service.obtener_archivos_por_rol(self.usuario_actual.Rol)
+        self.vista_archivos.llenar_tabla_archivos(archivos)
 
     def descargar_archivo(self, archivo_id):
         try:
-            nombre, contenido_bytes = self.archivos_dao.obtener_contenido_archivo(archivo_id)
-            if not contenido_bytes:
-                return None, None, "No se pudo extraer el archivo de la Base de Datos."
-
-            nombre = str(nombre)
-            if not nombre.lower().endswith(".pdf"):
-                nombre += ".pdf"
-
-            return nombre, contenido_bytes, ""
-        
+            return self.service.descargar_archivo(archivo_id)
         except Exception as e:
             return None, None, f"Error crítico al obtener el archivo: {str(e)}"
 
     def subir_nuevo_archivo(self, ruta_local, roles_permitidos):
         try:
-            if not os.path.exists(ruta_local):
-                return False
-
-            nombre_archivo = os.path.basename(ruta_local)
-            tipo = "PDF"
-
-            with open(ruta_local, "rb") as archivo_local:
-                contenido_bytes = archivo_local.read()
-
-            if isinstance(roles_permitidos, (list, tuple)):
-                roles_guardar = ",".join(roles_permitidos)
-            else:
-                roles_guardar = str(roles_permitidos)
-
-            if self.archivos_dao.guardar_archivo(nombre_archivo, tipo, contenido_bytes, roles_guardar):
+            exito, msg = self.service.subir_archivo(ruta_local, roles_permitidos)
+            if exito:
                 self.cargar_archivos()
-                return True, "El PDF se almacenó correctamente en la Base de Datos."
-            else:
-                return False, "Error interno en el DAO al guardar el archivo."
-
+            return exito, msg
         except Exception as e:
             return False, f"Error de lectura en el archivo local: {str(e)}"

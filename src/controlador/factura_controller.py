@@ -1,9 +1,4 @@
-# archivo: controller/factura_controller.py
-
 class FacturaController:
-    def __init__(self, factura_dao):
-        self.factura_dao = factura_dao
+    def __init__(self, factura_service):
+        self.service = factura_service
         self.vista_factura = None
-
-    # Aquí se añadirán las funciones de negocio para facturas más adelante
-

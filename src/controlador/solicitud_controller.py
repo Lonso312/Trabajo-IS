@@ -1,7 +1,4 @@
-# archivo: controller/solicitud_controller.py
-
 class SolicitudController:
-    def __init__(self, solicitud_dao):
-        self.solicitud_dao = solicitud_dao
+    def __init__(self, solicitud_service):
+        self.service = solicitud_service
         self.vista_solicitud = None
-        

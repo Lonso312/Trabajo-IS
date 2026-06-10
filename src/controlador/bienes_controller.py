@@ -1,66 +1,59 @@
-# archivo: controller/bienes_controller.py
-from modelo.vo.BienVO import BienVO
-
 class BienesController:
-    def __init__(self, bienes_dao, miembro_autenticado_vo):
-        self.bienes_dao = bienes_dao
+    def __init__(self, bienes_service, miembro_autenticado_vo):
+        self.service = bienes_service
         self.usuario_actual = miembro_autenticado_vo
         self.vista_gestion = None
 
     def abrir_pantalla_bienes(self):
-        # Control estricto de accesos según la jerarquía solicitada
-        if self.usuario_actual.Rol not in ['PRESIDENTE', 'TESORERO', 'JEFE DEPARTAMENTO']:
-            return False, "Solo Tesoreros o Presidentes pueden gestionar los bienes."
-    
+        acceso, msg = self.service.verificar_acceso(self.usuario_actual.Rol)
+        if not acceso:
+            return False, msg
         from vistas.gestion_bienes_view import GestionBienesView
         self.vista_gestion = GestionBienesView(self)
         self.cargar_bienes()
         self.vista_gestion.show()
 
     def cargar_bienes(self):
-        """Consulta directa al origen de datos mapeado sin filtros redundantes"""
         if not self.vista_gestion:
             return
-        bienes_formateados = self.bienes_dao.obtener_bienes_para_gestion()
-        self.vista_gestion.llenar_tabla_bienes(bienes_formateados)
+        self.vista_gestion.llenar_tabla_bienes(self.service.obtener_bienes())
 
     def seleccionar_bien(self, bien_id):
         if not self.vista_gestion:
             return
-        bien_vo = self.bienes_dao.buscar_por_id(bien_id)
+        bien_vo = self.service.obtener_bien(bien_id)
         if bien_vo:
             self.vista_gestion.mostrar_detalle_bien(bien_vo)
 
     def añadir_bien(self, datos):
         try:
-            nuevo_bien = BienVO(tipo=datos['tipo'], precio=float(datos['precio']), cantidad=int(datos['cantidad']))
-            if self.bienes_dao.crear(nuevo_bien):
-                self.vista_gestion.mostrar_mensaje_exito("El bien se ha añadido correctamente al inventario.")
+            if self.service.añadir_bien(datos):
+                self.vista_gestion.mostrar_mensaje_exito("Bien añadido correctamente al inventario.")
                 self.cargar_bienes()
                 self.vista_gestion.mostrar_mensaje_vacio()
             else:
-                self.vista_gestion.mostrar_mensaje_error("Error interno del DAO al intentar insertar el bien.")
+                self.vista_gestion.mostrar_mensaje_error("Error al insertar el bien.")
         except Exception as e:
             self.vista_gestion.mostrar_mensaje_error(f"Error al añadir el bien: {str(e)}")
 
     def actualizar_bien(self, bien_id, datos):
         try:
-            if self.bienes_dao.actualizar_bien(bien_id, datos['tipo'], float(datos['precio']), int(datos['cantidad'])):
-                self.vista_gestion.mostrar_mensaje_exito("El bien se ha modificado correctamente.")
+            if self.service.actualizar_bien(bien_id, datos):
+                self.vista_gestion.mostrar_mensaje_exito("Bien modificado correctamente.")
                 self.cargar_bienes()
-                self.seleccionar_bien(bien_id) # Refresca el panel informativo derecho
+                self.seleccionar_bien(bien_id)
             else:
-                self.vista_gestion.mostrar_mensaje_error("No se pudieron guardar las modificaciones en la base de datos.")
+                self.vista_gestion.mostrar_mensaje_error("No se pudieron guardar las modificaciones.")
         except Exception as e:
             self.vista_gestion.mostrar_mensaje_error(f"Error al actualizar el bien: {str(e)}")
 
     def eliminar_bien(self, bien_id):
         try:
-            if self.bienes_dao.eliminar_bien(bien_id):
-                self.vista_gestion.mostrar_mensaje_exito("El bien seleccionado se ha eliminado del inventario.")
+            if self.service.eliminar_bien(bien_id):
+                self.vista_gestion.mostrar_mensaje_exito("Bien eliminado del inventario.")
                 self.cargar_bienes()
                 self.vista_gestion.mostrar_mensaje_vacio()
             else:
-                self.vista_gestion.mostrar_mensaje_error("Error al intentar eliminar el registro.")
+                self.vista_gestion.mostrar_mensaje_error("Error al eliminar el registro.")
         except Exception as e:
             self.vista_gestion.mostrar_mensaje_error(f"Error al eliminar el bien: {str(e)}")
