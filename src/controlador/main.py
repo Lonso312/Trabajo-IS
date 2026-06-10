@@ -79,8 +79,8 @@ class ControladorApp:
                 self.miembro
             )
 
-            from DAO.ArchivosDAO import ArchivosDAO
-            from controller.archivos_controller import ArchivosController
+            from modelo.dao.ArchivosDAO import ArchivosDAO
+            from controlador.archivos_controller import ArchivosController
             self.archivos_dao = ArchivosDAO(self.conexion)
             self.archivos_controller = ArchivosController(self.archivos_dao, self.miembro)
 

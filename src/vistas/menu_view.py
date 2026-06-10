@@ -613,7 +613,7 @@ class MenuView(QMainWindow):
             if txt_pass.text() != txt_conf.text():
                 return QMessageBox.warning(self, "Error", "Las contraseñas no coinciden.")
             
-            from DAO.MiembroDAO import MiembroDAO
+            from modelo.dao.MiembroDAO import MiembroDAO
             conexion_activa = self.grupo_controller.grupo_dao.conexion if hasattr(self, 'grupo_controller') and self.grupo_controller else None
             
             if conexion_activa:
@@ -645,7 +645,7 @@ class MenuView(QMainWindow):
                     cant = int(txt_cant.text().strip())
                     if hasattr(self, 'solicitud_dao') and self.solicitud_dao:
                         # 1. Creamos el Value Object adaptado
-                        from VO.solicitudCompra_vo import SolicitudMaterialVO
+                        from modelo.vo.solicitudCompra_vo import SolicitudMaterialVO
                         nueva_solicitud = SolicitudMaterialVO(
                             concepto=txt_mat.text().strip(),
                             cantidad=cant,

@@ -74,7 +74,7 @@ class MiembroDAO:
             cursor.execute(sql, [usuario_id])
             fila = cursor.fetchone()
             if fila:
-                from VO.MiembroVO import MiembroVO
+                from modelo.vo.MiembroVO import MiembroVO
                 
                 miembro = MiembroVO(
                     UsuarioID=fila[0],
