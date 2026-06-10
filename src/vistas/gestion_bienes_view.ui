@@ -88,19 +88,19 @@
       </item>
       <item>
        <widget class="QPushButton" name="btn_anadir">
-        <property name="text"><string>➕ Añadir Nuevo Bien</string></property>
+        <property name="text"><string> Añadir Nuevo Bien</string></property>
         <property name="styleSheet"><string>background-color: #2ECC71; color: white; font-weight: bold; padding: 8px;</string></property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btn_editar">
-        <property name="text"><string>✏️ Editar Seleccionado</string></property>
+        <property name="text"><string> Editar Seleccionado</string></property>
         <property name="styleSheet"><string>background-color: #3498DB; color: white; font-weight: bold; padding: 8px;</string></property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btn_eliminar">
-        <property name="text"><string>🗑️ Eliminar Permanente</string></property>
+        <property name="text"><string> Eliminar Permanente</string></property>
         <property name="styleSheet"><string>background-color: #E74C3C; color: white; font-weight: bold; padding: 8px;</string></property>
        </widget>
       </item>
