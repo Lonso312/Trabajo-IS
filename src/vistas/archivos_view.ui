@@ -39,19 +39,19 @@
     <layout class="QHBoxLayout" name="layout_botones">
      <item>
       <widget class="QPushButton" name="btn_subir">
-       <property name="text"><string>📤 Subir Nuevo Documento</string></property>
+       <property name="text"><string> Subir Nuevo Documento</string></property>
        <property name="styleSheet"><string>background-color: #0078D4; color: white; font-weight: bold; padding: 10px;</string></property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="btn_descargar">
-       <property name="text"><string>📥 Descargar Selección</string></property>
+       <property name="text"><string> Descargar Selección</string></property>
        <property name="styleSheet"><string>background-color: #2ECC71; color: white; font-weight: bold; padding: 10px;</string></property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="btn_eliminar">
-       <property name="text"><string>🗑️ Eliminar Archivo</string></property>
+       <property name="text"><string> Eliminar Archivo</string></property>
        <property name="styleSheet"><string>background-color: #E74C3C; color: white; font-weight: bold; padding: 10px;</string></property>
       </widget>
      </item>
