@@ -1,48 +1,29 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
-from PyQt5.QtCore import Qt
+# archivo: vistas/login_view.py
+import os
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5 import uic
 
-class LoginView(QWidget):
+# Ruta al archivo .ui (está en la misma carpeta que este .py)
+UI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VistaLogin.ui")
+
+class LoginView(QMainWindow):
     def __init__(self, callback_login):
         super().__init__()
         self.callback_login = callback_login
-        self.init_ui()
 
-    def init_ui(self):
-        self.setWindowTitle("SGA - Inicio de Sesión")
-        self.setFixedSize(350, 250)
+        # Carga el diseño desde el archivo .ui
+        uic.loadUi(UI_PATH, self)
 
-        # Layout principal vertical
-        layout = QVBoxLayout()
+        # Conecta el botón del .ui con el método de login
+        # El botón se llama "BotonAceptar" en el .ui
+        self.BotonAceptar.clicked.connect(self.intentar_login)
 
-        # Título
-        lbl_titulo = QLabel("SGA DATABASE")
-        lbl_titulo.setAlignment(Qt.AlignCenter)
-        lbl_titulo.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;")
-        layout.addWidget(lbl_titulo)
-
-        # Campos de texto
-        layout.addWidget(QLabel("Usuario:"))
-        self.txt_usuario = QLineEdit()
-        self.txt_usuario.setPlaceholderText("Ingrese su nombre de usuario")
-        layout.addWidget(self.txt_usuario)
-
-        layout.addWidget(QLabel("Contraseña:"))
-        self.txt_password = QLineEdit()
-        self.txt_password.setPlaceholderText("Ingrese su contraseña")
-        self.txt_password.setEchoMode(QLineEdit.Password) 
-        layout.addWidget(self.txt_password)
-
-        # Botón
-        btn_entrar = QPushButton("Iniciar Sesión")
-        btn_entrar.setStyleSheet("background-color: #0078D4; color: white; font-weight: bold; padding: 5px;")
-        btn_entrar.clicked.connect(self.intentar_login)
-        layout.addWidget(btn_entrar)
-
-        self.setLayout(layout)
+        # También permite pulsar Enter en el campo contraseña
+        self.ContrasenaEdit.returnPressed.connect(self.intentar_login)
 
     def intentar_login(self):
-        usuario = self.txt_usuario.text().strip()
-        password = self.txt_password.text().strip()
+        usuario = self.UsuarioEdit.text().strip()
+        password = self.ContrasenaEdit.text().strip()
 
         if not usuario or not password:
             QMessageBox.warning(self, "Campos vacíos", "Por favor, rellene todos los campos.")
