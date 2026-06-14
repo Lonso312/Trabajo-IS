@@ -17,7 +17,10 @@
    <string>background-color: #F8F9FA; font-family: 'Segoe UI', Arial;</string>
   </property>
   <layout class="QVBoxLayout" name="layout_principal">
-   <property name="margins"><number>20</number></property>
+   <property name="leftMargin"><number>20</number></property>
+   <property name="topMargin"><number>20</number></property>
+   <property name="rightMargin"><number>20</number></property>
+   <property name="bottomMargin"><number>20</number></property>
    <item>
     <widget class="QLabel" name="lbl_titulo">
      <property name="font"><font><pointSize>14</pointSize><bold>true</bold></font></property>

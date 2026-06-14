@@ -9,23 +9,17 @@ class FormularioBienDialog(QDialog):
     def __init__(self, bien_vo=None, parent=None):
         super().__init__(parent)
         self.bien_vo = bien_vo
-
-        # Carga el .ui — widgets: txt_tipo, txt_precio, txt_cantidad, botones
         uic.loadUi(UI_PATH, self)
 
-        # Título dinámico según si es edición o creación
+        # Nombres reales del .ui: txt_tipo, txt_precio, txt_cantidad, botones
         self.setWindowTitle("Editar Bien / Activo" if bien_vo else "Añadir Nuevo Bien")
-
-        # Conecta los botones estándar del QDialogButtonBox
         self.botones.accepted.connect(self.accept)
         self.botones.rejected.connect(self.reject)
 
-        # Placeholders
         self.txt_tipo.setPlaceholderText("Ej. Computadora portátil, Silla...")
         self.txt_precio.setPlaceholderText("Ej. 450.00")
         self.txt_cantidad.setPlaceholderText("Ej. 10")
 
-        # Si es edición, rellena los campos con los datos actuales
         if bien_vo:
             self.txt_tipo.setText(str(bien_vo.tipo) if bien_vo.tipo else "")
             self.txt_precio.setText(str(bien_vo.precio) if bien_vo.precio is not None else "")

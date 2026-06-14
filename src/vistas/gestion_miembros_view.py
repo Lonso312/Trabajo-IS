@@ -1,6 +1,6 @@
 # archivo: vistas/gestion_miembros_view.py
 import os
-from PyQt5.QtWidgets import QWidget, QMessageBox, QTableWidgetItem, QDialog, QHeaderView, QAbstractItemView
+from PyQt5.QtWidgets import QWidget, QMessageBox, QTableWidgetItem, QDialog, QHeaderView, QAbstractItemView, QCheckBox, QVBoxLayout, QWidget as QW
 from PyQt5.QtCore import Qt
 from PyQt5 import uic
 
@@ -18,32 +18,28 @@ class GestionMiembrosView(QWidget):
         self.controller                   = controller
         self.miembro_actual_vo            = None
 
-        # Carga el .ui — widgets: lbl_titulo, cb_filtro_estado, cb_filtro_depto,
-        # tabla_miembros, panel_derecho, layout_derecho, lbl_perfil,
-        # btn_aceptar, btn_registrar, btn_actualizar, btn_eliminar
         uic.loadUi(UI_PATH, self)
 
-        # Configura la tabla
+        # Configura la tabla — nombres reales del .ui: tabla_miembros
         self.tabla_miembros.setColumnCount(3)
         self.tabla_miembros.setHorizontalHeaderLabels(["Nombre Completo", "Rol", "Correo Electrónico"])
         self.tabla_miembros.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tabla_miembros.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tabla_miembros.setEditTriggers(QAbstractItemView.NoEditTriggers)
-
         header = self.tabla_miembros.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.Stretch)
 
-        # Conecta señales
+        # Conecta señales — nombres reales del .ui: cb_filtro_depto, btn_aceptar,
+        # btn_registrar, btn_actualizar, btn_eliminar, lbl_perfil
         self.tabla_miembros.itemSelectionChanged.connect(self.on_fila_seleccionada)
-        self.cb_filtro_depto.currentTextChanged.connect(self.callback_filtrar)
+        self.cb_filtro_depto.currentTextChanged.connect(self._on_filtro_cambiado)
         self.btn_aceptar.clicked.connect(self._aceptar_actual)
         self.btn_actualizar.clicked.connect(self.abrir_dialogo_edicion)
         self.btn_eliminar.clicked.connect(self._eliminar_actual)
         self.btn_registrar.clicked.connect(self.abrir_dialogo_agregar_miembro)
 
-        # Estado inicial: botones deshabilitados hasta seleccionar un miembro
         self._set_botones_habilitados(False)
         self.lbl_perfil.setText("Selecciona un miembro para ver su ficha")
 
@@ -65,10 +61,8 @@ class GestionMiembrosView(QWidget):
         for miembro in lista_miembros:
             row = self.tabla_miembros.rowCount()
             self.tabla_miembros.insertRow(row)
-
             item_nombre = QTableWidgetItem(str(miembro["nombre_completo"]))
             item_nombre.setData(Qt.UserRole, miembro["id"])
-
             self.tabla_miembros.setItem(row, 0, item_nombre)
             self.tabla_miembros.setItem(row, 1, QTableWidgetItem(str(miembro["rol"])))
             self.tabla_miembros.setItem(row, 2, QTableWidgetItem(str(miembro["email"])))
@@ -78,17 +72,13 @@ class GestionMiembrosView(QWidget):
     def mostrar_panel_derecho(self, miembro_vo):
         self.miembro_actual_vo = miembro_vo
         self._set_botones_habilitados(True)
-
-        # Bloquea el botón Aceptar si ya está aceptado
         self.btn_aceptar.setEnabled(miembro_vo.Aceptado != 1)
 
-        # Bloquea eliminar si es Presidente y el operador no tiene rango
         rol_op = self._obtener_rol_operador()
         es_presidente = str(miembro_vo.Rol).strip().upper() == "PRESIDENTE"
         sin_permiso = rol_op in ["JEFE DEPARTAMENTO", "TESORERO", "SECRETARIO"]
         self.btn_eliminar.setEnabled(not (es_presidente and sin_permiso))
 
-        # Actualiza el label de la ficha (definido en el .ui como lbl_perfil)
         estado = "✔ Aceptado" if miembro_vo.Aceptado == 1 else "⏳ Pendiente"
         self.lbl_perfil.setText(
             f"<b>{miembro_vo.Name} {miembro_vo.Surname}</b><br>"
@@ -116,6 +106,10 @@ class GestionMiembrosView(QWidget):
     # =================================================================
     # ACCIONES
     # =================================================================
+
+    def _on_filtro_cambiado(self, texto):
+        filtro = None if texto == "Todos" else texto
+        self.callback_filtrar(filtro)
 
     def on_fila_seleccionada(self):
         item = self.tabla_miembros.item(self.tabla_miembros.currentRow(), 0)
@@ -178,7 +172,8 @@ class GestionMiembrosView(QWidget):
     # =================================================================
 
     def obtener_filtro_actual(self):
-        return self.cb_filtro_depto.currentText()
+        texto = self.cb_filtro_depto.currentText()
+        return None if texto == "Todos" else texto
 
     def limpiar_detalle(self):
         self.mostrar_mensaje_vacio()
@@ -190,8 +185,6 @@ class GestionMiembrosView(QWidget):
         QMessageBox.critical(self, "Error de Operación", mensaje)
 
     def _obtener_rol_operador(self):
-        if not hasattr(self, 'controller') or not self.controller:
-            return "MIEMBRO"
         user = getattr(self.controller, 'usuario_logueado', None)
         if not user:
             return "MIEMBRO"

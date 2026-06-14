@@ -18,7 +18,10 @@
   </property>
   <layout class="QHBoxLayout" name="layout_principal">
    <property name="spacing"><number>20</number></property>
-   <property name="margins"><number>20</number></property>
+   <property name="leftMargin"><number>20</number></property>
+   <property name="topMargin"><number>20</number></property>
+   <property name="rightMargin"><number>20</number></property>
+   <property name="bottomMargin"><number>20</number></property>
    <item>
     <layout class="QVBoxLayout" name="panel_izquierdo">
      <item>

@@ -124,8 +124,15 @@ class ControladorApp:
     def cerrar_sesion(self):
         if self.menu_view:
             self.menu_view.close()
+            self.menu_view = None
+
         self.miembro = None
-        self.login_view.txt_password.clear()
+        self.bienes_controller = None
+        self.archivos_controller = None
+
+        # Limpia el campo contraseña y vuelve a mostrar el login
+        self.login_view.ContrasenaEdit.clear()
+        self.login_view.UsuarioEdit.clear()
         self.login_view.show()
 
     def abrir_gestion_miembros(self):
