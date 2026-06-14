@@ -42,12 +42,19 @@ class UsuarioController:
         return self.service.obtener_catalogos_edicion()
 
     def procesar_aceptar_miembro(self, usuario_id):
-        if self.service.aceptar_miembro(usuario_id):
-            self.vista_gestion.mostrar_mensaje_exito("Miembro aceptado correctamente.")
-            self._refrescar_tabla()
-            self.cargar_detalle_miembro(usuario_id)
-        else:
-            self.vista_gestion.mostrar_mensaje_error("No se pudo cambiar el estado del miembro.")
+        try:
+            miembro = self.service.obtener_detalle_miembro(usuario_id)
+            if miembro and getattr(miembro, 'Estado', None) == 'Activo':
+                self.vista_gestion.mostrar_mensaje_error("Este miembro ya está aceptado.")
+                return
+            if self.service.aceptar_miembro(usuario_id):
+                self.vista_gestion.mostrar_mensaje_exito("Miembro aceptado correctamente.")
+                self._refrescar_tabla()
+                self.cargar_detalle_miembro(usuario_id)
+            else:
+                self.vista_gestion.mostrar_mensaje_error("No se pudo cambiar el estado del miembro.")
+        except Exception as e:
+            self.vista_gestion.mostrar_mensaje_error(f"Error: {str(e)}")
 
     def procesar_eliminar_miembro(self, usuario_id):
         if self.service.eliminar_miembro(usuario_id):
