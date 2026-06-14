@@ -19,13 +19,28 @@ class ArchivosController:
     def cargar_archivos(self):
         if not self.vista_archivos:
             return
-        archivos = self.service.obtener_archivos_por_rol(self.usuario_actual.Rol)
-        self.vista_archivos.llenar_tabla_archivos(archivos)
+        try:
+            archivos = self.service.obtener_archivos_por_rol(self.usuario_actual.Rol)
+            self.vista_archivos.llenar_tabla_archivos(archivos)
+        except Exception as e:
+            print(f"[ArchivosController] Error cargando archivos: {e}")
+            self.vista_archivos.llenar_tabla_archivos([])
 
     def descargar_archivo(self, archivo_id):
+        """
+        Bug 5 fix: garantiza que siempre se devuelve una tupla (nombre, datos, error).
+        Antes podía devolver el resultado crudo del servicio (sin desempaquetar),
+        lo que provocaba que la vista fallara al esperar 3 valores.
+        """
         try:
-            return self.service.descargar_archivo(archivo_id)
+            resultado = self.service.descargar_archivo(archivo_id)
+            if resultado is None:
+                return None, None, "El servicio no devolvió datos para este archivo."
+            # El servicio debe retornar (nombre_archivo, datos_bytes, None) o
+            # (None, None, mensaje_error) — lo propagamos tal cual
+            return resultado
         except Exception as e:
+            print(f"[ArchivosController] Error descargando archivo {archivo_id}: {e}")
             return None, None, f"Error crítico al obtener el archivo: {str(e)}"
 
     def subir_nuevo_archivo(self, ruta_local, roles_permitidos):
@@ -35,4 +50,5 @@ class ArchivosController:
                 self.cargar_archivos()
             return exito, msg
         except Exception as e:
+            print(f"[ArchivosController] Error subiendo archivo: {e}")
             return False, f"Error de lectura en el archivo local: {str(e)}"

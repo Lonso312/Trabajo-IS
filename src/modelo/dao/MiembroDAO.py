@@ -198,12 +198,19 @@ class MiembroDAO:
             cursor.close()
 
     def aceptar_miembro(self, usuario_id):
-        """Cambia el estado de un miembro pendiente a aceptado (Aceptado = 1)"""
+        """
+        Cambia el estado de un miembro pendiente a aceptado (Aceptado = 1).
+        Solo actualiza si el miembro aún NO está aceptado (Aceptado = 0 o NULL).
+        Devuelve False si ya estaba aceptado (rowcount = 0).
+        """
         cursor = self.conexion.cursor()
         try:
-            cursor.execute("UPDATE Miembros SET Aceptado = 1 WHERE UsuarioID = ?", [usuario_id])
+            cursor.execute(
+                "UPDATE Miembros SET Aceptado = 1 WHERE UsuarioID = ? AND (Aceptado = 0 OR Aceptado IS NULL)",
+                [usuario_id]
+            )
             self.conexion.commit()
-            return True
+            return cursor.rowcount > 0  # False si ya estaba aceptado
         except Exception as e:
             print(f"Error en MiembroDAO.aceptar_miembro: {e}")
             return False

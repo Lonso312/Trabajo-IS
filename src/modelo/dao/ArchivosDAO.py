@@ -42,6 +42,11 @@ class ArchivosDAO:
             cursor.close()
 
     def obtener_contenido_archivo(self, archivo_id):
+        """
+        Devuelve (nombre, contenido_bytes, None) en éxito
+        o (None, None, mensaje_error) en fallo.
+        El controlador y la vista esperan siempre 3 valores.
+        """
         cursor = self.conexion.cursor()
         try:
             sql = """
@@ -52,17 +57,17 @@ class ArchivosDAO:
             cursor.execute(sql, [archivo_id])
             fila = cursor.fetchone()
             if not fila:
-                return None, None
+                return None, None, f"No se encontró el archivo con ID {archivo_id}."
 
             cursor.execute(
                 "UPDATE dbo.Archivos SET Num_download = Num_download + 1 WHERE ArchivoID = ?",
                 [archivo_id]
             )
             self.conexion.commit()
-            return fila[0], fila[1]
+            return fila[0], fila[1], None
         except Exception as e:
             print(f"Error al recuperar binario del archivo: {e}")
-            return None, None
+            return None, None, f"Error al leer el archivo de la base de datos: {str(e)}"
         finally:
             cursor.close()
 

@@ -104,4 +104,3 @@ class FormularioEditarDialog(QDialog):
             "departamentos_lista": [d for d, cb in self.dict_check_deptos.items() if cb.isChecked()],
             "grupos_lista":        [g for g, cb in self.dict_check_grupos.items() if cb.isChecked()]
         }
-        }

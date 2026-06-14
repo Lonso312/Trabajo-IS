@@ -82,7 +82,7 @@ class TareaDAO:
         sql = """
             SELECT s.Name, s.Ubicacion, ts.AsistenciaObligatoria
             FROM Sesiones s
-            INNER JOIN TieneSesion ts ON s.Name LIKE '%' + ts.SesionID + '%'
+            INNER JOIN TieneSesion ts ON LTRIM(RTRIM(s.Name)) = LTRIM(RTRIM(ts.SesionID))
             WHERE ts.GrupoID = ?
         """
         lista_sesiones = []
@@ -106,14 +106,13 @@ class TareaDAO:
     def crear_tarea_en_grupo(self, grupo_id, titulo_tarea, descripcion="", fecha_limite=""):
         cursor = self.conexion.cursor()
 
+        import datetime
         if not fecha_limite:
-            import datetime
-            fecha_limite = datetime.date.today().strftime("%Y%mdd")
+            fecha_limite = datetime.date.today().strftime("%Y%m%d")
         else:
             fecha_limite = fecha_limite.replace("-", "").replace("/", "").replace(" ", "").strip()
             if len(fecha_limite) != 8:
-                import datetime
-                fecha_limite = datetime.date.today().strftime("%Y%mdd")
+                fecha_limite = datetime.date.today().strftime("%Y%m%d")
         
         sql_tarea = "INSERT INTO Tareas (Name, Descripcion, Fecha_limite) VALUES (?, ?, ?)"
         sql_vinculo = "INSERT INTO TieneTarea (GrupoID, TareaID, EstadoTarea) VALUES (?, ?, 'Pendiente')"

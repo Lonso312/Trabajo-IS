@@ -2,7 +2,7 @@
 
 class UsuarioController:
     def __init__(self, usuario_service):
-        self.service = usuario_service  # ← solo habla con el servicio
+        self.service = usuario_service
         self.vista_gestion = None
         self.usuario_logueado = None
 
@@ -42,10 +42,16 @@ class UsuarioController:
         return self.service.obtener_catalogos_edicion()
 
     def procesar_aceptar_miembro(self, usuario_id):
+        """
+        Bug 2 fix: comprueba MiembroVO.Aceptado antes de llamar al servicio,
+        evitando re-aceptar miembros ya activos.
+        """
         try:
             miembro = self.service.obtener_detalle_miembro(usuario_id)
-            if miembro and getattr(miembro, 'Estado', None) == 'Activo':
-                self.vista_gestion.mostrar_mensaje_error("Este miembro ya está aceptado.")
+            if miembro and miembro.Aceptado:
+                self.vista_gestion.mostrar_mensaje_error(
+                    "Este miembro ya está aceptado."
+                )
                 return
             if self.service.aceptar_miembro(usuario_id):
                 self.vista_gestion.mostrar_mensaje_exito("Miembro aceptado correctamente.")
@@ -54,26 +60,39 @@ class UsuarioController:
             else:
                 self.vista_gestion.mostrar_mensaje_error("No se pudo cambiar el estado del miembro.")
         except Exception as e:
-            self.vista_gestion.mostrar_mensaje_error(f"Error: {str(e)}")
+            self.vista_gestion.mostrar_mensaje_error(f"Error al aceptar miembro: {str(e)}")
 
     def procesar_eliminar_miembro(self, usuario_id):
-        if self.service.eliminar_miembro(usuario_id):
-            self.vista_gestion.mostrar_mensaje_exito("Miembro eliminado correctamente.")
-            self._refrescar_tabla()
-            self.vista_gestion.limpiar_detalle()
-        else:
-            self.vista_gestion.mostrar_mensaje_error("Error al intentar eliminar el registro.")
+        try:
+            if self.service.eliminar_miembro(usuario_id):
+                self.vista_gestion.mostrar_mensaje_exito("Miembro eliminado correctamente.")
+                self._refrescar_tabla()
+                self.vista_gestion.limpiar_detalle()
+            else:
+                self.vista_gestion.mostrar_mensaje_error("Error al intentar eliminar el registro.")
+        except Exception as e:
+            self.vista_gestion.mostrar_mensaje_error(f"Error al eliminar miembro: {str(e)}")
 
     def procesar_actualizar_miembro(self, usuario_id, dni, nombre, apellido, telefono, email, rol, lista_deptos, lista_grupos):
+        """
+        Bug 1 fix: captura ValueError lanzado por los setters de MiembroVO
+        (DNI, Email, Telefono, Name) y lo muestra en la UI sin crashear.
+        """
         try:
-            if self.service.actualizar_miembro(usuario_id, dni, nombre, apellido, telefono, email, rol, lista_deptos, lista_grupos):
+            if self.service.actualizar_miembro(
+                usuario_id, dni, nombre, apellido,
+                telefono, email, rol, lista_deptos, lista_grupos
+            ):
                 self.vista_gestion.mostrar_mensaje_exito("Miembro actualizado correctamente.")
                 self._refrescar_tabla()
                 self.cargar_detalle_miembro(usuario_id)
             else:
                 self.vista_gestion.mostrar_mensaje_error("No se pudieron guardar los cambios.")
+        except ValueError as e:
+            # Los setters de MiembroVO lanzan ValueError con mensajes claros
+            self.vista_gestion.mostrar_mensaje_error(f"Dato inválido: {str(e)}")
         except Exception as e:
-            self.vista_gestion.mostrar_mensaje_error(f"Error al actualizar: {str(e)}")
+            self.vista_gestion.mostrar_mensaje_error(f"Error inesperado al actualizar: {str(e)}")
 
     def procesar_agregar_miembro(self, rol_operador, datos):
         return self.service.agregar_miembro(rol_operador, datos)
