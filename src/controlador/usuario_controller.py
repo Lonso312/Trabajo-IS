@@ -58,12 +58,15 @@ class UsuarioController:
             self.vista_gestion.mostrar_mensaje_error("Error al intentar eliminar el registro.")
 
     def procesar_actualizar_miembro(self, usuario_id, dni, nombre, apellido, telefono, email, rol, lista_deptos, lista_grupos):
-        if self.service.actualizar_miembro(usuario_id, dni, nombre, apellido, telefono, email, rol, lista_deptos, lista_grupos):
-            self.vista_gestion.mostrar_mensaje_exito("Miembro actualizado correctamente.")
-            self._refrescar_tabla()
-            self.cargar_detalle_miembro(usuario_id)
-        else:
-            self.vista_gestion.mostrar_mensaje_error("No se pudieron guardar los cambios.")
+        try:
+            if self.service.actualizar_miembro(usuario_id, dni, nombre, apellido, telefono, email, rol, lista_deptos, lista_grupos):
+                self.vista_gestion.mostrar_mensaje_exito("Miembro actualizado correctamente.")
+                self._refrescar_tabla()
+                self.cargar_detalle_miembro(usuario_id)
+            else:
+                self.vista_gestion.mostrar_mensaje_error("No se pudieron guardar los cambios.")
+        except Exception as e:
+            self.vista_gestion.mostrar_mensaje_error(f"Error al actualizar: {str(e)}")
 
     def procesar_agregar_miembro(self, rol_operador, datos):
         return self.service.agregar_miembro(rol_operador, datos)
