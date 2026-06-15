@@ -43,60 +43,96 @@ class ArchivosDAO:
 
     def obtener_contenido_archivo(self, archivo_id):
         """
-        Devuelve (nombre, contenido_bytes, None) en éxito
-        o (None, None, mensaje_error) en fallo.
-        El controlador y la vista esperan siempre 3 valores.
+        Recupera el nombre y los bytes puros del archivo.
+        Devuelve exactamente una tupla de 2 elementos (nombre, datos) 
+        para alinearse con lo que espera la capa de servicio.
         """
         cursor = self.conexion.cursor()
         try:
-            sql = """
-                SELECT Nombre, Contenido
-                FROM dbo.Archivos
-                WHERE ArchivoID = ?
-            """
+            sql = "SELECT Nombre, Contenido FROM dbo.Archivos WHERE ArchivoID = ?"
             cursor.execute(sql, [archivo_id])
             fila = cursor.fetchone()
             if not fila:
-                return None, None, f"No se encontró el archivo con ID {archivo_id}."
+                return None, None # Retorna 2 valores vacíos si no existe
 
+            nombre = fila[0]
+            contenido_bruto = fila[1]
+            
+            # EXTRACCIÓN ULTRA-ROBUSTA DE BYTES
+            if contenido_bruto is None:
+                datos_finales = b""
+            elif isinstance(contenido_bruto, bytes):
+                datos_finales = contenido_bruto
+            elif isinstance(contenido_bruto, str):
+                # Si por algún motivo el driver lo transformó a cadena hexadecimal o texto
+                if contenido_bruto.startswith('0x'):
+                    datos_finales = bytes.fromhex(contenido_bruto[2:])
+                else:
+                    datos_finales = contenido_bruto.encode('latin1', errors='ignore')
+            elif hasattr(contenido_bruto, 'getBytes'): # Si es un objeto Blob nativo de Java
+                datos_finales = bytes(contenido_bruto.getBytes(1, contenido_bruto.length()))
+            else:
+                # Cualquier otro tipo de array de bytes (JArray, bytearray, etc.)
+                datos_finales = bytes(contenido_bruto)
+
+            # Incrementamos el contador de descargas
             cursor.execute(
                 "UPDATE dbo.Archivos SET Num_download = Num_download + 1 WHERE ArchivoID = ?",
                 [archivo_id]
             )
             self.conexion.commit()
-            return fila[0], fila[1], None
+            
+            # SOLUCIÓN AL BUG: Devolvemos exactamente 2 valores (nombre, datos)
+            return nombre, datos_finales
+            
         except Exception as e:
-            print(f"Error al recuperar binario del archivo: {e}")
-            return None, None, f"Error al leer el archivo de la base de datos: {str(e)}"
+            print(f"Error al recuperar binario del archivo en DAO: {e}")
+            return None, None # En caso de error, también devolvemos 2 valores
         finally:
             cursor.close()
-
+            
     def guardar_archivo(self, nombre, tipo, contenido_bytes, rol_permitido):
-        """Inserta un archivo PDF binario directamente en la base de datos"""
-        cursor = self.conexion.cursor()
         try:
-            # Asegura que realmente sea bytes de Python
-            contenido_binario = bytes(contenido_bytes)
-
-            # Lo convierte a byte[] de Java para JDBC
-            contenido_java = jpype.JArray(jpype.JByte)(contenido_binario)
-
-            sql = """
-                INSERT INTO dbo.Archivos
-                (Nombre, Tipo, Contenido, RolPermitido, Num_download, Num_view)
-                VALUES (?, ?, ?, ?, 0, 0)
-            """
-            cursor.execute(sql, [
-                str(nombre).strip(),
-                str(tipo).strip().upper(),
-                contenido_java,
-                str(rol_permitido).strip().upper()
-            ])
+            # Detectamos si estamos usando una conexión Java (JayDeBeApi)
+            if hasattr(self.conexion, 'jconn'):
+                # SOLUCIÓN MAESTRA: Usamos PreparedStatement nativo de Java
+                java_conn = self.conexion.jconn
+                sql = """
+                    INSERT INTO dbo.Archivos
+                    (Nombre, Tipo, Contenido, RolPermitido, Num_download, Num_view)
+                    VALUES (?, ?, ?, ?, 0, 0)
+                """
+                stmt = java_conn.prepareStatement(sql)
+                stmt.setString(1, str(nombre).strip())
+                stmt.setString(2, str(tipo).strip().upper())
+                
+                # Preparamos los bytes para Java
+                bytes_firmados = [b if b < 128 else b - 256 for b in contenido_bytes]
+                java_bytes = jpype.JArray(jpype.JByte)(bytes_firmados)
+                
+                # .setBytes() le dice a SQL Server explícitamente: "ESTO ES BINARIO"
+                stmt.setBytes(3, java_bytes)
+                stmt.setString(4, str(rol_permitido).strip().upper())
+                
+                stmt.executeUpdate()
+                stmt.close()
+            else:
+                # Fallback si en el futuro cambias a pyodbc u otro driver
+                cursor = self.conexion.cursor()
+                sql = """
+                    INSERT INTO dbo.Archivos
+                    (Nombre, Tipo, Contenido, RolPermitido, Num_download, Num_view)
+                    VALUES (?, ?, ?, ?, 0, 0)
+                """
+                cursor.execute(sql, [
+                    str(nombre).strip(), str(tipo).strip().upper(),
+                    bytearray(contenido_bytes), str(rol_permitido).strip().upper()
+                ])
+                cursor.close()
+                
             self.conexion.commit()
             return True
 
         except Exception as e:
-            print(f"Error al insertar binario en la tabla Archivos: {e}")
+            print(f"Error crítico en DAO al guardar archivo: {e}")
             return False
-        finally:
-            cursor.close()
