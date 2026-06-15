@@ -45,10 +45,21 @@ class ArchivosController:
 
     def subir_nuevo_archivo(self, ruta_local, roles_permitidos):
         try:
-            exito, msg = self.service.subir_archivo(ruta_local, roles_permitidos)
+            exito, msg = False, "No se seleccionaron roles válidos."
+            
+            # Si el usuario marcó 'TODOS', registramos un único archivo accesible para todos
+            if "TODOS" in roles_permitidos:
+                exito, msg = self.service.subir_archivo(ruta_local, "TODOS")
+            else:
+                # La base de datos espera un string por registro. Si seleccionó varios, 
+                # registramos el documento para cada rol de forma independiente.
+                for rol in roles_permitidos:
+                    exito, msg = self.service.subir_archivo(ruta_local, rol)
+            
             if exito:
                 self.cargar_archivos()
             return exito, msg
+        
         except Exception as e:
-            print(f"[ArchivosController] Error subiendo archivo: {e}")
-            return False, f"Error de lectura en el archivo local: {str(e)}"
+            print(f"[ArchivosController] Error crítico en subida: {e}")
+            return False, f"Error en el proceso de subida: {str(e)}"
