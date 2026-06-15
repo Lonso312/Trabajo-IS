@@ -38,10 +38,12 @@ class ArchivosView(QWidget):
             self.tabla_archivos.setItem(row, 1, QTableWidgetItem(str(archivo['nombre'])))
             self.tabla_archivos.setItem(row, 2, QTableWidgetItem(str(archivo['rol_permitido'])))
             self.tabla_archivos.setItem(row, 3, QTableWidgetItem(str(archivo['descargas'])))
+            
             btn = QPushButton("Descargar PDF")
             btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet("background-color: #2ECC71; color: white; padding: 4px 12px; border-radius: 4px; border: none; font-weight: bold;")
-            btn.clicked.connect(lambda checked, aid=archivo['id']: self.controller.descargar_archivo(aid))
+            # Conecta al nuevo tramitador de descargas de la vista
+            btn.clicked.connect(lambda checked, aid=archivo['id']: self._procesar_descarga_efectiva(aid))
             self.tabla_archivos.setCellWidget(row, 4, btn)
 
     def _descargar_seleccionado(self):
@@ -51,8 +53,40 @@ class ArchivosView(QWidget):
             return
         item_id = self.tabla_archivos.item(fila, 0)
         if item_id:
-            self.controller.descargar_archivo(int(item_id.text()))
+            self._procesar_descarga_efectiva(int(item_id.text()))
 
+    def _procesar_descarga_efectiva(self, archivo_id):
+        """Obtiene los datos del controlador y descarga físicamente el archivo al disco"""
+        nombre, datos, error = self.controller.descargar_archivo(archivo_id)
+        if error:
+            QMessageBox.critical(self, "Error al descargar", error)
+            return
+        
+        if datos:
+            # 1. Limpiamos espacios o caracteres raros del nombre que venía de la BD
+            nombre_limpio = str(nombre).strip()
+            ext = os.path.splitext(nombre_limpio)[1]
+            
+            ruta_guardar, _ = QFileDialog.getSaveFileName(
+                self, "Guardar Archivo Asíncrono", nombre_limpio, f"Archivos (*{ext});;Todos los archivos (*)"
+            )
+            
+            # 2. Nos aseguramos de que el usuario no haya cancelado la ventana
+            if ruta_guardar and ruta_guardar.strip():
+                try:
+                    # 3. SOLUCIÓN AL ERRNO 22: Normalizamos la ruta para el sistema operativo
+                    # Esto convierte barras '/' a '\' en Windows automáticamente y limpia imperfecciones
+                    ruta_final = os.path.normpath(ruta_guardar.strip())
+                    
+                    # 4. Escribimos los bytes asegurándonos de convertir el objeto a bytes puros de Python
+                    with open(ruta_final, 'wb') as f:
+                        f.write(bytes(datos))
+                        
+                    QMessageBox.information(self, "Éxito", f"Archivo guardado correctamente en:\n{ruta_final}")
+                    self.controller.cargar_archivos() # Recarga para actualizar el contador de descargas
+                except Exception as e:
+                    print(f"[Error de Escritura Detallado]: {e}")
+                    QMessageBox.critical(self, "Error de Escritura", f"No se pudo escribir en el disco: {e}")
     def abrir_dialogo_subida(self):
         ruta, _ = QFileDialog.getOpenFileName(self, "Seleccionar archivo PDF", "", "Archivos PDF (*.pdf)")
         if not ruta:
