@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt5.QtCore import Qt
 from utils.event_bus import EventBus
 from modelo.vo.reunion_vo import ReunionSecretariaVO
-from modelo.vo.factura_vo import FacturaVO
+# FacturaVO ya no se instancia aquí — se gestiona en FacturaService
 
 class TarjetaClicable(QFrame):
     def __init__(self, id_entidad, titulo, sub_1, callback_click, es_verde=False, parent=None):
@@ -326,7 +326,9 @@ class MenuView(QMainWindow):
         btn_crear_factura.clicked.connect(self.abrir_dialogo_crear_factura)
         self.right_layout.addWidget(btn_crear_factura)
         
-        lista_facturas = self.factura_dao.obtener_todas_las_facturas() if hasattr(self, 'factura_dao') and self.factura_dao else []
+        lista_facturas = []
+        if hasattr(self, 'factura_controller') and self.factura_controller:
+            lista_facturas = self.factura_controller.obtener_todas_las_facturas()
         for fac in lista_facturas:
             self.crear_tarjeta_factura(fac)
             
@@ -383,7 +385,10 @@ class MenuView(QMainWindow):
         lbl_titulo.setStyleSheet("font-weight: bold; font-size: 14px; color: #2C3E50; margin-bottom: 10px; border:none;")
         self.right_layout.addWidget(lbl_titulo)
         
-        lista_solicitudes = self.solicitud_dao.obtener_solicitudes_pendientes_vo() if hasattr(self, 'solicitud_dao') and self.solicitud_dao else []
+        lista_solicitudes = []
+        if hasattr(self, 'solicitud_controller') and self.solicitud_controller:
+            self.solicitud_controller.usuario_actual = self.miembro
+            lista_solicitudes = self.solicitud_controller.obtener_solicitudes_pendientes()
            
         if not lista_solicitudes:
             lbl_vacio = QLabel("No hay solicitudes de materiales pendientes de aprobación.")
@@ -433,12 +438,20 @@ class MenuView(QMainWindow):
         self.right_layout.addWidget(frame)
 
     def procesar_respuesta_solicitud(self, solicitud_id, nuevo_estado):
-        if hasattr(self, 'solicitud_dao') and self.solicitud_dao:
-            if self.solicitud_dao.cambiar_estado_solicitud(solicitud_id=solicitud_id, nuevo_estado=nuevo_estado):
-                QMessageBox.information(self, "Decisión Registrada", f"La solicitud ha sido marcada como: {nuevo_estado}")
-                self.cargar_panel_solicitudes()
-            else:
-                QMessageBox.critical(self, "Error", "No se pudo actualizar el estado de la solicitud.")
+        if not (hasattr(self, 'solicitud_controller') and self.solicitud_controller):
+            QMessageBox.critical(self, "Error", "El módulo de solicitudes no está disponible.")
+            return
+
+        if nuevo_estado == "Aprobado":
+            exito, msg = self.solicitud_controller.procesar_aprobar_solicitud(solicitud_id)
+        else:
+            exito, msg = self.solicitud_controller.procesar_rechazar_solicitud(solicitud_id)
+
+        if exito:
+            QMessageBox.information(self, "Decisión Registrada", f"La solicitud ha sido marcada como: {nuevo_estado}")
+            self.cargar_panel_solicitudes()
+        else:
+            QMessageBox.critical(self, "Error", msg)
 
     # =================================================================
     # NUEVO MÓDULO: SECRETARÍA Y REUNIONES
@@ -641,22 +654,19 @@ class MenuView(QMainWindow):
         
         
         if dialogo.exec_() == QDialog.Accepted:
-            try:
-                    cant = int(txt_cant.text().strip())
-                    if hasattr(self, 'solicitud_dao') and self.solicitud_dao:
-                        # 1. Creamos el Value Object adaptado
-                        from modelo.vo.solicitudCompra_vo import SolicitudMaterialVO
-                        nueva_solicitud = SolicitudMaterialVO(
-                            concepto=txt_mat.text().strip(),
-                            cantidad=cant,
-                            solicitante=self.miembro.Name,
-                            estado="Pendiente"
-                        )
-                        # 2. Se lo enviamos al DAO usando el método VO
-                        self.solicitud_dao.registrar_solicitud_vo(nueva_solicitud)
-                        QMessageBox.information(self, "Éxito", "Solicitud enviada a Tesorería.")
-            except ValueError:
-                QMessageBox.warning(self, "Error", "La cantidad debe ser un número.")
+            if not (hasattr(self, 'solicitud_controller') and self.solicitud_controller):
+                QMessageBox.critical(self, "Error", "El módulo de solicitudes no está disponible.")
+                return
+            datos = {
+                "concepto":    txt_mat.text().strip(),
+                "cantidad":    txt_cant.text().strip(),
+                "solicitante": self.miembro.Name,
+            }
+            exito, msg = self.solicitud_controller.procesar_crear_solicitud(datos)
+            if exito:
+                QMessageBox.information(self, "Éxito", msg)
+            else:
+                QMessageBox.warning(self, "Error", msg)
 
     def abrir_dialogo_crear_grupo(self):
         nombre, ok = QInputDialog.getText(self, "Nuevo Grupo", "Nombre del grupo:")
@@ -715,22 +725,21 @@ class MenuView(QMainWindow):
         layout.addWidget(botones)
         
         if dialogo.exec_() == QDialog.Accepted:
-            try:
-                monto = float(txt_monto.text().strip())
-                import datetime
-                if hasattr(self, 'factura_dao') and self.factura_dao:
-                    nueva_factura = FacturaVO(
-                        concepto=txt_concepto.text().strip(),
-                        monto=monto,
-                        fecha=datetime.date.today().strftime("%Y-%m-%d"),
-                        estado=cb_estado.currentText()
-                    )
-
-
-                    self.factura_dao.insertar_factura(nueva_factura)
-                    self.cargar_panel_facturas()
-            except ValueError:
-                QMessageBox.warning(self, "Error", "Monto inválido.")
+            if not (hasattr(self, 'factura_controller') and self.factura_controller):
+                QMessageBox.critical(self, "Error", "El módulo de facturas no está disponible.")
+                return
+            import datetime
+            datos = {
+                "concepto": txt_concepto.text().strip(),
+                "monto":    txt_monto.text().strip(),
+                "fecha":    datetime.date.today().strftime("%Y-%m-%d"),
+                "estado":   cb_estado.currentText(),
+            }
+            exito, msg = self.factura_controller.procesar_crear_factura(datos)
+            if exito:
+                self.cargar_panel_facturas()
+            else:
+                QMessageBox.warning(self, "Error", msg)
 
     def abrir_dialogo_editar_factura(self, factura_dict):
         dialogo = QDialog(self)
@@ -753,13 +762,19 @@ class MenuView(QMainWindow):
         layout.addWidget(botones)
         
         if dialogo.exec_() == QDialog.Accepted:
-            try:
-                monto = float(txt_monto.text().strip())
-                if hasattr(self, 'factura_dao') and self.factura_dao:
-                    self.factura_dao.actualizar_factura(factura_dict['id'], txt_concepto.text().strip(), monto, cb_estado.currentText())
-                    self.cargar_panel_facturas()
-            except ValueError:
-                QMessageBox.warning(self, "Error", "Monto inválido.")
+            if not (hasattr(self, 'factura_controller') and self.factura_controller):
+                QMessageBox.critical(self, "Error", "El módulo de facturas no está disponible.")
+                return
+            datos = {
+                "concepto": txt_concepto.text().strip(),
+                "monto":    txt_monto.text().strip(),
+                "estado":   cb_estado.currentText(),
+            }
+            exito, msg = self.factura_controller.procesar_actualizar_factura(factura_dict['id'], datos)
+            if exito:
+                self.cargar_panel_facturas()
+            else:
+                QMessageBox.warning(self, "Error", msg)
 
     def refrescar_grupos(self):
         if hasattr(self, 'grupo_controller') and self.grupo_controller:
