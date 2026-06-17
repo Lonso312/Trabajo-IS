@@ -162,10 +162,16 @@ CREATE TABLE Actas(
 );
 
 -- CORRECCIÓN: Se cambió el nombre de 'SecretariaReuniones' a 'Reuniones' para que coincida con las claves foráneas e inserts posteriores.
+-- AMPLIACIÓN: se añaden Titulo, Hora, Lugar y Estado para que coincida con lo que necesita SecretariaDAO.py.
 CREATE TABLE Reuniones (
     ReunionID INT IDENTITY(1,1) PRIMARY KEY,
     fecha DATETIME not null,
-    tipo VARCHAR(50) not null
+    tipo VARCHAR(50) not null,
+    Titulo NVARCHAR(150) not null,
+    Hora VARCHAR(8) not null,
+    Lugar NVARCHAR(150) not null,
+    Estado VARCHAR(20) not null DEFAULT ('Programada'),
+    CONSTRAINT CK_Reuniones_Estado CHECK (Estado IN ('Programada', 'Celebrada', 'Cancelada'))
 );
 
 CREATE TABLE Contratos(
@@ -448,9 +454,9 @@ INSERT INTO Actas (fecha) VALUES
 ('2026-05-01'),
 ('2026-05-15');
 
-INSERT INTO Reuniones (fecha, tipo) VALUES 
-('2026-06-05 10:00:00', 'Ordinaria Semanal'),
-('2026-06-20 16:30:00', 'Extraordinaria');
+INSERT INTO Reuniones (fecha, tipo, Titulo, Hora, Lugar, Estado) VALUES 
+('2026-06-05 10:00:00', 'Ordinaria Semanal', 'Reunión Ordinaria Semanal', '10:00:00', 'Sala de Juntas Principal', 'Programada'),
+('2026-06-20 16:30:00', 'Extraordinaria', 'Reunión Extraordinaria', '16:30:00', 'Sala de Juntas Principal', 'Programada');
 
 INSERT INTO Contratos (fecha, duracion) VALUES 
 ('2026-01-01', '1 Anio'),

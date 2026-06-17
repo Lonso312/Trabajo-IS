@@ -8,7 +8,7 @@ class SecretariaDAO:
     def obtener_reuniones_secretaria(self):
         """Trae todas las reuniones registradas devolviendo una lista de objetos VO"""
         cursor = self.conexion.cursor()
-        sql = "SELECT ReunionID, Titulo, Fecha, Hora, Lugar, Estado FROM SecretariaReuniones ORDER BY Fecha DESC"
+        sql = "SELECT ReunionID, Titulo, fecha, Hora, Lugar, Estado FROM Reuniones ORDER BY fecha DESC"
         lista_vo = []
         try:
             cursor.execute(sql)
@@ -26,14 +26,15 @@ class SecretariaDAO:
     def registrar_reunion(self, reunion_vo: ReunionSecretariaVO):
         """Permite al Secretario agendar una nueva reunión recibiendo un objeto VO"""
         cursor = self.conexion.cursor()
-        sql = "INSERT INTO SecretariaReuniones (Titulo, Fecha, Hora, Lugar, Estado) VALUES (?, ?, ?, ?, ?)"
+        sql = "INSERT INTO Reuniones (Titulo, fecha, Hora, Lugar, Estado, tipo) VALUES (?, ?, ?, ?, ?, ?)"
         try:
             cursor.execute(sql, [
                 reunion_vo.titulo, 
                 reunion_vo.fecha, 
                 reunion_vo.hora, 
                 reunion_vo.lugar,
-                reunion_vo.estado
+                reunion_vo.estado,
+                reunion_vo.titulo  # 'tipo' es NOT NULL en el esquema; reutilizamos el título
             ])
             self.conexion.commit()
             return True
@@ -46,7 +47,7 @@ class SecretariaDAO:
     def actualizar_estado_reunion(self, reunion_id, nuevo_estado):
         """Modifica el estado de la reunión"""
         cursor = self.conexion.cursor()
-        sql = "UPDATE SecretariaReuniones SET Estado = ? WHERE ReunionID = ?"
+        sql = "UPDATE Reuniones SET Estado = ? WHERE ReunionID = ?"
         try:
             cursor.execute(sql, [str(nuevo_estado), int(reunion_id)])
             self.conexion.commit()

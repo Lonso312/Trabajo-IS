@@ -483,7 +483,7 @@ class MenuView(QMainWindow):
             btn_crear_reunion.clicked.connect(self.mostrar_dialogo_crear_reunion)
             self.right_layout.addWidget(btn_crear_reunion)
 
-        lista_reuniones = self.secretaria_dao.obtener_reuniones_secretaria() if hasattr(self, 'secretaria_dao') and self.secretaria_dao else []
+        lista_reuniones = self.secretaria_controller.obtener_reuniones() if hasattr(self, 'secretaria_controller') and self.secretaria_controller else []
         
         if not lista_reuniones:
             lbl_vacio = QLabel("No hay reuniones programadas actualmente.")
@@ -554,9 +554,13 @@ class MenuView(QMainWindow):
         self.right_layout.addWidget(frame)
 
     def cambiar_estado_reunion(self, reunion_id, nuevo_estado):
-        if hasattr(self, 'secretaria_dao') and self.secretaria_dao:
-            if self.secretaria_dao.actualizar_estado_reunion(reunion_id, nuevo_estado):
-                self.cargar_panel_secretaria()
+        if not (hasattr(self, 'secretaria_controller') and self.secretaria_controller):
+            return
+        exito, mensaje = self.secretaria_controller.procesar_cambiar_estado(reunion_id, nuevo_estado)
+        if exito:
+            self.cargar_panel_secretaria()
+        else:
+            QMessageBox.critical(self, "Error", mensaje)
 
     def mostrar_dialogo_crear_reunion(self):
         dialogo = QDialog(self)
@@ -584,25 +588,26 @@ class MenuView(QMainWindow):
         if dialogo.exec_() == QDialog.Accepted:
             titulo = txt_titulo.text().strip()
             fecha = txt_fecha.text().strip() or datetime.date.today().strftime("%Y-%m-%d")
-            hora = txt_hora.text().strip() 
+            hora = txt_hora.text().strip()
             lugar = txt_lugar.text().strip()
-            
-            if titulo and fecha and hora and lugar:
-                if len(hora) == 5 and ":" in hora:
-                    hora = f"{hora}:00"
-                
-                nueva_reunion = ReunionSecretariaVO(
-                    titulo=titulo, 
-                    fecha=fecha, 
-                    hora=hora, 
-                    lugar=lugar
-                )
 
-                if self.secretaria_dao.registrar_reunion(nueva_reunion):
-                    print("Reunión registrada con éxito")
-                    self.cargar_panel_secretaria() 
-                else:
-                    print("Error al registrar la reunión")
+            if not (hasattr(self, 'secretaria_controller') and self.secretaria_controller):
+                QMessageBox.critical(self, "Error", "El módulo de secretaría no está disponible.")
+                return
+
+            datos = {
+                "titulo": titulo,
+                "fecha": fecha,
+                "hora": hora,
+                "lugar": lugar,
+            }
+
+            exito, mensaje = self.secretaria_controller.procesar_crear_reunion(datos)
+            if exito:
+                QMessageBox.information(self, "Éxito", mensaje)
+                self.cargar_panel_secretaria()
+            else:
+                QMessageBox.critical(self, "Error al Convocar Reunión", mensaje)
     # =================================================================
     # VENTANAS MODALES GLOBALES
     # =================================================================

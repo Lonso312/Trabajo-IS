@@ -97,6 +97,7 @@ class ControladorApp:
             # Controladores que dependen del usuario autenticado
             self.bienes_controller   = BienesController(self.bienes_service, self.miembro)
             self.archivos_controller = ArchivosController(self.archivos_service, self.miembro)
+            self.secretaria_controller.usuario_logueado = self.miembro
 
             self.login_view.hide()
 
@@ -129,6 +130,7 @@ class ControladorApp:
         self.miembro = None
         self.bienes_controller = None
         self.archivos_controller = None
+        self.secretaria_controller.usuario_logueado = None
 
         # Limpia el campo contraseña y vuelve a mostrar el login
         self.login_view.ContrasenaEdit.clear()
