@@ -218,14 +218,54 @@ class MiembroDAO:
             cursor.close()
 
     def eliminar_miembro(self, usuario_id):
-        """Elimina por completo a un miembro (las claves foráneas se encargan del CASCADE)"""
+        """
+        Elimina por completo a un miembro.
+
+        La BD NO tiene ON DELETE CASCADE en las foreign keys que apuntan a
+        Miembros, por lo que hay que borrar manualmente, en orden, todas las
+        filas dependientes antes del DELETE final. Todo dentro de una sola
+        transacción: si algo falla se hace rollback de todo.
+        """
         cursor = self.conexion.cursor()
+
+        # Tablas que tienen una FK hacia Miembros.UsuarioID.
+        # Si en el futuro aparece otra excepción de tipo REFERENCE constraint
+        # mencionando una tabla que no esté aquí, añadirla a esta lista.
+        tablas_dependientes = [
+            ("Gestion_JefeMiembro", "UsuarioID"),
+            ("EstaEnDepartamento",  "UsuarioID"),
+            ("EstaEnGrupo",         "UsuarioID"),
+            ("LoginUsuario",        None),  # se borra por NombreUsuario, ver abajo
+        ]
+
         try:
+            for tabla, columna in tablas_dependientes:
+                if tabla == "LoginUsuario":
+                    # LoginUsuario se relaciona por NombreUsuario, no por UsuarioID
+                    cursor.execute(
+                        "DELETE FROM LoginUsuario WHERE NombreUsuario = "
+                        "(SELECT NombreUsuario FROM Miembros WHERE UsuarioID = ?)",
+                        [usuario_id]
+                    )
+                else:
+                    cursor.execute(
+                        f"DELETE FROM {tabla} WHERE {columna} = ?",
+                        [usuario_id]
+                    )
+
             cursor.execute("DELETE FROM Miembros WHERE UsuarioID = ?", [usuario_id])
             self.conexion.commit()
-            return True
+            return cursor.rowcount > 0
+
         except Exception as e:
             print(f"Error en MiembroDAO.eliminar_miembro: {e}")
+            try:
+                self.conexion.rollback()
+            except Exception:
+                pass
+            # Si el error sigue siendo un REFERENCE constraint, significa que
+            # hay otra tabla dependiente no contemplada en la lista de arriba.
+            # El mensaje de SQL Server incluye el nombre de esa tabla.
             return False
         finally:
             cursor.close()
