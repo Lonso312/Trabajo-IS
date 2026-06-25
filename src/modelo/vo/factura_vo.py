@@ -2,57 +2,64 @@
 
 class FacturaVO:
     def __init__(self, idFactura=None, concepto=None, monto=0.0, fecha=None, estado=None):
-        self.idFactura = idFactura
-        self.concepto = concepto
-        self.monto = monto
-        self.fecha = fecha
-        self.estado = estado
+        # Validación: concepto
+        if concepto is not None and isinstance(concepto, str) and not concepto.strip():
+            raise ValueError("El concepto de la factura no puede estar en blanco.")
+        self._concepto = concepto
 
-    @property
-    def monto(self):
-        return self._monto
-
-    @monto.setter
-    def monto(self, value):
+        # Validación: monto
         try:
-            val_float = float(value)
+            val_float = float(monto)
             if val_float < 0.0:
                 raise ValueError()
             self._monto = val_float
         except (ValueError, TypeError):
-            raise ValueError(f"El monto de la factura no puede ser negativo ni inválido: {value}")
+            raise ValueError(f"El monto de la factura no puede ser negativo ni inválido: {monto}")
+
+        # Validación: estado
+        if estado is not None and isinstance(estado, str) and not estado.strip():
+            raise ValueError("El estado de la factura no puede estar en blanco.")
+        self._estado = estado
+
+        self._idFactura = idFactura
+        self._fecha = fecha
+
+    # --- PROPIEDADES DE SOLO LECTURA ---
+
+    @property
+    def idFactura(self):
+        return self._idFactura
 
     @property
     def concepto(self):
         return self._concepto
 
-    @concepto.setter
-    def concepto(self, value):
-        if value and isinstance(value, str) and not value.strip():
-            raise ValueError("El concepto de la factura no puede estar en blanco.")
-        self._concepto = value
+    @property
+    def monto(self):
+        return self._monto
+
+    @property
+    def fecha(self):
+        return self._fecha
 
     @property
     def estado(self):
         return self._estado
 
-    @estado.setter
-    def estado(self, value):
-        if value and isinstance(value, str) and not value.strip():
-            raise ValueError("El estado de la factura no puede estar en blanco.")
-        self._estado = value
+    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, FacturaVO):
             return False
-        return (self.idFactura == otro.idFactura and 
-                self.concepto == otro.concepto and 
-                self.monto == otro.monto and 
-                self.fecha == otro.fecha and 
-                self.estado == otro.estado)
+        return (self._idFactura == otro._idFactura and
+                self._concepto == otro._concepto and
+                self._monto == otro._monto and
+                self._fecha == otro._fecha and
+                self._estado == otro._estado)
 
     def __str__(self):
-        return f"FacturaVO[ID: {self.idFactura} | Concepto: {self.concepto} | Monto: {self.monto:.2f} € | Estado: {self.estado}]"
+        return (f"FacturaVO[ID: {self._idFactura} | Concepto: {self._concepto} "
+                f"| Monto: {self._monto:.2f} € | Estado: {self._estado}]")
 
     def __repr__(self):
         return self.__str__()

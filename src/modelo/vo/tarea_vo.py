@@ -1,33 +1,56 @@
+# archivo: tarea_vo.py
+
 class TareaVO:
-    def __init__(self, TareaID=None, GrupoID=None, Titulo=None, Descripcion=None, FechaLimite=None):
-        self.TareaID = TareaID
-        self.GrupoID = GrupoID
-        self.Titulo = Titulo
-        self.Descripcion = Descripcion
-        self.FechaLimite = FechaLimite
+    def __init__(self, TareaID=None, GrupoID=None, Titulo=None,
+                 Descripcion=None, FechaLimite=None):
+
+        # Validación: Titulo
+        if Titulo is not None and isinstance(Titulo, str) and not Titulo.strip():
+            raise ValueError(
+                "El título de la tarea no puede consistir únicamente en espacios en blanco."
+            )
+        self._Titulo = Titulo
+
+        self._TareaID = TareaID
+        self._GrupoID = GrupoID
+        self._Descripcion = Descripcion
+        self._FechaLimite = FechaLimite
+
+    # --- PROPIEDADES DE SOLO LECTURA ---
+
+    @property
+    def TareaID(self):
+        return self._TareaID
+
+    @property
+    def GrupoID(self):
+        return self._GrupoID
 
     @property
     def Titulo(self):
         return self._Titulo
 
-    @Titulo.setter
-    def Titulo(self, value):
-        if value and isinstance(value, str) and not value.strip():
-            raise ValueError("El título de la tarea no puede consistir únicamente en espacios en blanco.")
-        self._Titulo = value
+    @property
+    def Descripcion(self):
+        return self._Descripcion
 
+    @property
+    def FechaLimite(self):
+        return self._FechaLimite
+
+    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, TareaVO):
             return False
-        return (self.TareaID == otro.TareaID and 
-                self.GrupoID == otro.GrupoID and 
-                self.Titulo == otro.Titulo and 
-                self.Descripcion == otro.Descripcion and 
-                self.FechaLimite == otro.FechaLimite)
+        return (self._TareaID == otro._TareaID and
+                self._GrupoID == otro._GrupoID and
+                self._Titulo == otro._Titulo and
+                self._Descripcion == otro._Descripcion and
+                self._FechaLimite == otro._FechaLimite)
 
     def __str__(self):
-        return f"TareaVO[ID: {self.TareaID} | Título: {self.Titulo} | Grupo Asignado: {self.GrupoID}]"
+        return f"TareaVO[ID: {self._TareaID} | Título: {self._Titulo} | Grupo Asignado: {self._GrupoID}]"
 
     def __repr__(self):
         return self.__str__()
