@@ -1,7 +1,7 @@
 # archivo: BienVO.py
 
 class BienVO:
-    def __init__(self, BienID=None, tipo=None, precio=None, cantidad=None):
+    def __init__(self, BienID=None, tipo=None, precio=None, cantidad=None, tesoreros_asignados="Ninguno"):
 
         # Validación: tipo
         if tipo is not None and isinstance(tipo, str) and not tipo.strip():
@@ -35,7 +35,7 @@ class BienVO:
         self._BienID = BienID
 
         # Atributo extendido para información agregada de tesoreros vinculados
-        self._tesoreros_asignados = "Ninguno"
+        self._tesoreros_asignados = tesoreros_asignados
 
     # --- PROPIEDADES DE SOLO LECTURA ---
 

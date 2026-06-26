@@ -3,7 +3,7 @@ import os
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5 import uic
 
-UI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VistaLogin.ui")
+UI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "login_view.ui")
 
 class LoginView(QMainWindow):
     def __init__(self, callback_login):

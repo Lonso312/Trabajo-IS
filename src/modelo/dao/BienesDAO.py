@@ -1,5 +1,5 @@
 # archivo: DAO/BienesDAO.py
-from  modelo.vo.BienVO import BienVO
+from modelo.vo.BienVO import BienVO
 
 class BienesDAO:
     def __init__(self, conexion_db):
@@ -10,11 +10,7 @@ class BienesDAO:
         cursor = self.conexion.cursor()
         sql = "INSERT INTO Bienes (tipo, precio, cantidad) VALUES (?, ?, ?)"
         try:
-            cursor.execute(sql, [
-                bien.tipo,
-                bien.precio,
-                bien.cantidad
-            ])
+            cursor.execute(sql, [bien.tipo, bien.precio, bien.cantidad])
             self.conexion.commit()
             return True
         except Exception as e:
@@ -56,14 +52,13 @@ class BienesDAO:
             cursor.execute(sql, [bien_id])
             fila = cursor.fetchone()
             if fila:
-                bien = BienVO(
+                return BienVO(
                     BienID=fila[0],
                     tipo=str(fila[1]).strip() if fila[1] else "",
                     precio=fila[2],
-                    cantidad=fila[3]
+                    cantidad=fila[3],
+                    tesoreros_asignados=str(fila[4]).strip() if fila[4] else "Ninguno"
                 )
-                bien.tesoreros_asignados = str(fila[4]).strip() if fila[4] else "Ninguno"
-                return bien
             return None
         except Exception as e:
             print(f"Error en BienesDAO.buscar_por_id: {e}")
@@ -90,14 +85,11 @@ class BienesDAO:
             cursor.close()
 
     def eliminar_bien(self, bien_id):
-        """DELETE: Elimina permanentemente el bien (Limpia primero la tabla intermedia Organiza_Bien)"""
+        """DELETE: Elimina permanentemente el bien (limpia primero la tabla intermedia Organiza_Bien)"""
         cursor = self.conexion.cursor()
         try:
-            # Corrección preventiva: Al no tener ON DELETE CASCADE en el script SQL de Organiza_Bien,
-            # limpiamos manualmente la relación intermedia para evitar violación de llaves foráneas.
+            # Sin ON DELETE CASCADE, limpiamos manualmente la relación intermedia
             cursor.execute("DELETE FROM Organiza_Bien WHERE BienID = ?", [bien_id])
-            
-            # Eliminamos el registro de la tabla maestra
             cursor.execute("DELETE FROM Bienes WHERE BienID = ?", [bien_id])
             self.conexion.commit()
             return True
@@ -132,7 +124,7 @@ class BienesDAO:
     # =================================================================
     # GESTIÓN DE RELACIONES ASOCIADAS (CON TESOREROS)
     # =================================================================
-    
+
     def limpiar_tesoreros_bien(self, bien_id):
         """Elimina todos los tesoreros vinculados a la organización de este bien"""
         cursor = self.conexion.cursor()
