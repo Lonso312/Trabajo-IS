@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ArchivosView</class>
+ <widget class="QWidget" name="ArchivosView">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>850</width>
+    <height>480</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SGA - Repositorio General de Documentos</string>
+  </property>
+  <property name="styleSheet">
+   <string>background-color: #F8F9FA; font-family: 'Segoe UI', Arial;</string>
+  </property>
+  <layout class="QVBoxLayout" name="layout_principal">
+   <property name="leftMargin"><number>20</number></property>
+   <property name="topMargin"><number>20</number></property>
+   <property name="rightMargin"><number>20</number></property>
+   <property name="bottomMargin"><number>20</number></property>
+   <item>
+    <widget class="QLabel" name="lbl_titulo">
+     <property name="font"><font><pointSize>14</pointSize><bold>true</bold></font></property>
+     <property name="text"><string>Repositorio de Documentación Compartida</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="lbl_subtitulo">
+     <property name="styleSheet"><string>color: #7F8C8D; font-size: 11px;</string></property>
+     <property name="text"><string>Los archivos mostrados están regulados estrictamente bajo tus permisos de credenciales.</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tabla_archivos">
+     <property name="styleSheet"><string>background-color: white;</string></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="layout_botones">
+     <item>
+      <widget class="QPushButton" name="btn_subir">
+       <property name="text"><string> Subir Nuevo Documento</string></property>
+       <property name="styleSheet"><string>background-color: #0078D4; color: white; font-weight: bold; padding: 10px;</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_descargar">
+       <property name="text"><string> Descargar Selección</string></property>
+       <property name="styleSheet"><string>background-color: #2ECC71; color: white; font-weight: bold; padding: 10px;</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_eliminar">
+       <property name="text"><string> Eliminar Archivo</string></property>
+       <property name="styleSheet"><string>background-color: #E74C3C; color: white; font-weight: bold; padding: 10px;</string></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+</ui>
