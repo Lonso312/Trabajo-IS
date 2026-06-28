@@ -1,13 +1,9 @@
-# archivo: factura_vo.py
-
 class FacturaVO:
     def __init__(self, idFactura=None, concepto=None, monto=0.0, fecha=None, estado=None):
-        # Validación: concepto
         if concepto is not None and isinstance(concepto, str) and not concepto.strip():
             raise ValueError("El concepto de la factura no puede estar en blanco.")
         self._concepto = concepto
 
-        # Validación: monto
         try:
             val_float = float(monto)
             if val_float < 0.0:
@@ -16,7 +12,6 @@ class FacturaVO:
         except (ValueError, TypeError):
             raise ValueError(f"El monto de la factura no puede ser negativo ni inválido: {monto}")
 
-        # Validación: estado
         if estado is not None and isinstance(estado, str) and not estado.strip():
             raise ValueError("El estado de la factura no puede estar en blanco.")
         self._estado = estado
@@ -24,7 +19,6 @@ class FacturaVO:
         self._idFactura = idFactura
         self._fecha = fecha
 
-    # --- PROPIEDADES DE SOLO LECTURA ---
 
     @property
     def idFactura(self):
@@ -46,7 +40,6 @@ class FacturaVO:
     def estado(self):
         return self._estado
 
-    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, FacturaVO):

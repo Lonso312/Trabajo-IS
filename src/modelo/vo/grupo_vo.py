@@ -1,13 +1,9 @@
-# archivo: grupo_vo.py
-
 class GrupoVO:
     def __init__(self, GrupoID=None, Name=None, CantidadMiembros=0):
-        # Validación: Name
         if Name is not None and isinstance(Name, str) and not Name.strip():
             raise ValueError("El nombre del grupo no puede estar en blanco.")
         self._Name = Name
 
-        # Validación: CantidadMiembros
         try:
             val_int = int(CantidadMiembros)
             if val_int < 0:
@@ -20,7 +16,6 @@ class GrupoVO:
 
         self._GrupoID = GrupoID
 
-    # --- PROPIEDADES DE SOLO LECTURA ---
 
     @property
     def GrupoID(self):
@@ -34,7 +29,6 @@ class GrupoVO:
     def CantidadMiembros(self):
         return self._CantidadMiembros
 
-    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, GrupoVO):

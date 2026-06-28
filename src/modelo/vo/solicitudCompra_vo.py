@@ -1,15 +1,11 @@
-# archivo: solicitudCompra_vo.py
-
 class SolicitudMaterialVO:
     def __init__(self, idSolicitud=None, concepto=None, cantidad=0,
                  solicitante=None, estado="Pendiente"):
 
-        # Validación: concepto
         if concepto is not None and isinstance(concepto, str) and not concepto.strip():
             raise ValueError("El concepto de la solicitud no puede estar vacío.")
         self._concepto = concepto
 
-        # Validación: cantidad
         try:
             val_int = int(cantidad)
             if val_int < 0:
@@ -18,19 +14,16 @@ class SolicitudMaterialVO:
         except (ValueError, TypeError):
             raise ValueError(f"La cantidad no puede ser negativa ni inválida: {cantidad}")
 
-        # Validación: solicitante
         if solicitante is not None and isinstance(solicitante, str) and not solicitante.strip():
             raise ValueError("El nombre del solicitante no puede estar vacío.")
         self._solicitante = solicitante
 
-        # Validación: estado
         if estado is not None and isinstance(estado, str) and not estado.strip():
             raise ValueError("El estado no puede estar vacío.")
         self._estado = estado
 
         self._idSolicitud = idSolicitud
 
-    # --- PROPIEDADES DE SOLO LECTURA ---
 
     @property
     def idSolicitud(self):
@@ -52,7 +45,6 @@ class SolicitudMaterialVO:
     def estado(self):
         return self._estado
 
-    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, SolicitudMaterialVO):

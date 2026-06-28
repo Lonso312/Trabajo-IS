@@ -1,14 +1,10 @@
-# archivo: BienVO.py
-
 class BienVO:
     def __init__(self, BienID=None, tipo=None, precio=None, cantidad=None, tesoreros_asignados="Ninguno"):
 
-        # Validación: tipo
         if tipo is not None and isinstance(tipo, str) and not tipo.strip():
             raise ValueError("El tipo del bien no puede estar en blanco.")
         self._tipo = tipo
 
-        # Validación: precio
         if precio is not None:
             try:
                 val_precio = float(precio)
@@ -20,7 +16,6 @@ class BienVO:
         else:
             self._precio = None
 
-        # Validación: cantidad
         if cantidad is not None:
             try:
                 val_cantidad = int(cantidad)
@@ -34,10 +29,8 @@ class BienVO:
 
         self._BienID = BienID
 
-        # Atributo extendido para información agregada de tesoreros vinculados
         self._tesoreros_asignados = tesoreros_asignados
 
-    # --- PROPIEDADES DE SOLO LECTURA ---
 
     @property
     def BienID(self):
@@ -59,7 +52,6 @@ class BienVO:
     def tesoreros_asignados(self):
         return self._tesoreros_asignados
 
-    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, BienVO):

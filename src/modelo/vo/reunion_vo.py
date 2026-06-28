@@ -1,5 +1,3 @@
-# archivo: reunion_vo.py
-
 class ReunionSecretariaVO:
     """Value Object que representa una reunion de la Secretaria (junta o pleno)."""
 
@@ -8,27 +6,22 @@ class ReunionSecretariaVO:
     def __init__(self, reunion_id=None, titulo=None, fecha=None, hora=None,
                  lugar=None, estado="Programada"):
 
-        # Validación: titulo
         if titulo is not None and isinstance(titulo, str) and not titulo.strip():
             raise ValueError("El titulo de la reunion no puede estar en blanco.")
         self._titulo = titulo.strip() if isinstance(titulo, str) else titulo
 
-        # Validación: fecha
         if fecha is not None and isinstance(fecha, str) and not fecha.strip():
             raise ValueError("La fecha de la reunion no puede estar en blanco.")
         self._fecha = fecha.strip() if isinstance(fecha, str) else fecha
 
-        # Validación: hora
         if hora is not None and isinstance(hora, str) and not hora.strip():
             raise ValueError("La hora de la reunion no puede estar en blanco.")
         self._hora = hora.strip() if isinstance(hora, str) else hora
 
-        # Validación: lugar
         if lugar is not None and isinstance(lugar, str) and not lugar.strip():
             raise ValueError("El lugar de la reunion no puede estar en blanco.")
         self._lugar = lugar.strip() if isinstance(lugar, str) else lugar
 
-        # Validación: estado
         valor_estado = str(estado).strip() if estado else "Programada"
         if valor_estado not in self.ESTADOS_VALIDOS:
             raise ValueError(
@@ -39,7 +32,6 @@ class ReunionSecretariaVO:
 
         self._reunion_id = reunion_id
 
-    # --- PROPIEDADES DE SOLO LECTURA ---
 
     @property
     def reunion_id(self):
@@ -65,7 +57,6 @@ class ReunionSecretariaVO:
     def estado(self):
         return self._estado
 
-    # --- CONSTRUCTOR AUXILIAR ---
 
     @staticmethod
     def from_fila_db(fila):
@@ -79,7 +70,6 @@ class ReunionSecretariaVO:
             estado=str(fila[5]).strip() if fila[5] else "Programada",
         )
 
-    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, ReunionSecretariaVO):
