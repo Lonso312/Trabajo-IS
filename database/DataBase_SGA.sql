@@ -1,9 +1,6 @@
 USE SGA_Database
 GO
 
--- ============================================================================
--- 1. CONTROL DE ELIMINACIÓN PREVIA (DROP TABLES INVERSO)
--- ============================================================================
 DROP TRIGGER IF EXISTS TR_ActualizarNumMiembros;
 GO
 
@@ -36,7 +33,7 @@ DROP TABLE IF EXISTS Grupos;
 DROP TABLE IF EXISTS Departamentos;
 DROP TABLE IF EXISTS Facturas;
 DROP TABLE IF EXISTS Actas;
-DROP TABLE IF EXISTS Reuniones;  -- Corregido el nombre aquí también
+DROP TABLE IF EXISTS Reuniones;  
 DROP TABLE IF EXISTS Contratos;
 DROP TABLE IF EXISTS Cuenta_Banco;
 DROP TABLE IF EXISTS Archivos;
@@ -48,9 +45,6 @@ DROP TABLE IF EXISTS LoginUsuario;
 DROP TABLE IF EXISTS Miembros;
 GO
 
--- ============================================================================
--- 2. CREACIÓN DE TABLAS MAESTRAS Y ESQUEMAS DE HERENCIA
--- ============================================================================
 SET DATEFORMAT ymd;
 
 CREATE TABLE Miembros(
@@ -161,8 +155,6 @@ CREATE TABLE Actas(
 	fecha date not null
 );
 
--- CORRECCIÓN: Se cambió el nombre de 'SecretariaReuniones' a 'Reuniones' para que coincida con las claves foráneas e inserts posteriores.
--- AMPLIACIÓN: se añaden Titulo, Hora, Lugar y Estado para que coincida con lo que necesita SecretariaDAO.py.
 CREATE TABLE Reuniones (
     ReunionID INT IDENTITY(1,1) PRIMARY KEY,
     fecha DATETIME not null,
@@ -193,10 +185,6 @@ CREATE TABLE Bienes(
 	precio DECIMAL(10,2) not null CONSTRAINT CK_Bienes_precio CHECK (precio > 0),
 	cantidad INT not null CONSTRAINT CK_Bienes_cantidad CHECK (cantidad > 0)
 );
-
--- ============================================================================
--- 3. CREACIÓN DE TABLAS INTERMEDIAS / RELACIONES
--- ============================================================================
 
 CREATE TABLE Gestion_MiemArch(
 	UsuarioID INT not null,
@@ -371,7 +359,6 @@ CREATE TABLE TieneSesion (
 );
 GO
 
--- CORRECCIÓN: El Trigger se sitúa al final del bloque estructural para garantizar que 'EstaEnGrupo' y 'Grupos' ya existan.
 CREATE TRIGGER TR_ActualizarNumMiembros
 ON EstaEnGrupo
 AFTER INSERT, UPDATE, DELETE
@@ -395,9 +382,6 @@ BEGIN
 END;
 GO
 
--- ============================================================================
--- 4. POBLACIÓN DE REGISTROS (INSERTS)
--- ============================================================================
 SET DATEFORMAT ymd;
 
 INSERT INTO Miembros (DNI, [Name], NombreUsuario, Surname, Rol, Telefono, Email, Aceptado) VALUES 
@@ -511,9 +495,6 @@ INSERT INTO TieneSesion (GrupoID, SesionID, AsistenciaObligatoria) VALUES
 (3, 'Asamblea de Presupuesto General', 1);
 GO
 
--- ============================================================================
--- 5. CONSULTAS DE COMPROBACIÓN COMPLETAS
--- ============================================================================
 SELECT * FROM Tareas;
 SELECT * FROM TieneTarea;
 SELECT * FROM Sesiones;
