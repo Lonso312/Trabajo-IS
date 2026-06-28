@@ -1,10 +1,8 @@
-# archivo: utils/event_bus.py
 from PyQt5.QtCore import QObject, pyqtSignal
 
 class EventBus(QObject):
     _instancia = None
     
-    # Definimos los "eventos" que pueden ocurrir en la app
     grupos_actualizados = pyqtSignal()
     miembros_actualizados = pyqtSignal()
 
