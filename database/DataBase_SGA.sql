@@ -393,7 +393,7 @@ INSERT INTO Miembros (DNI, [Name], NombreUsuario, Surname, Rol, Telefono, Email,
 ('44444444F', 'Laura','lauri', 'Gómez', 'MIEMBRO', 644556677, 'laura@sga.com', 1);
 
 INSERT INTO LoginUsuario (NombreUsuario, Contrasena) VALUES 
-('carlitos', '12'),
+('carlitos', 'AdminPres123!'),
 ('ana', 'TesoroPass456!'),
 ('deivid', 'JefeDep789!'),
 ('Gnomo', 'Secretario321!'),
