@@ -11,9 +11,6 @@ class SecretariaService:
     def __init__(self, secretaria_dao):
         self.secretaria_dao = secretaria_dao
 
-    # ------------------------------------------------------------------
-    # CONSULTA
-    # ------------------------------------------------------------------
     def obtener_reuniones(self):
         """Devuelve la lista de reuniones (objetos ReunionSecretariaVO)."""
         try:
@@ -22,9 +19,6 @@ class SecretariaService:
             print(f"[SecretariaService] Error obteniendo reuniones: {e}")
             return []
 
-    # ------------------------------------------------------------------
-    # CREACION
-    # ------------------------------------------------------------------
     def crear_reunion(self, datos: dict, rol_operador: str):
         """
         Valida los datos de la nueva reunion y la persiste.
@@ -44,7 +38,6 @@ class SecretariaService:
         if not lugar:
             return False, "El lugar de la reunion es obligatorio."
 
-        # --- Validacion de fecha ---
         if not fecha:
             fecha = datetime.date.today().strftime("%Y-%m-%d")
         try:
@@ -52,7 +45,6 @@ class SecretariaService:
         except ValueError:
             return False, "La fecha debe tener el formato AAAA-MM-DD."
 
-        # --- Validacion y normalizacion de hora ---
         if not hora:
             return False, "La hora de la reunion es obligatoria."
         if len(hora) == 5 and ":" in hora:
@@ -78,9 +70,6 @@ class SecretariaService:
             return True, "Reunion convocada correctamente."
         return False, "No se pudo registrar la reunion en la base de datos."
 
-    # ------------------------------------------------------------------
-    # CAMBIO DE ESTADO
-    # ------------------------------------------------------------------
     def cambiar_estado_reunion(self, reunion_id, nuevo_estado: str, rol_operador: str):
         """
         Valida permisos y el estado solicitado antes de actualizar la reunion.
