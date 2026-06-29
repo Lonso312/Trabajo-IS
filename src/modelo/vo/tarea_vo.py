@@ -1,10 +1,7 @@
-# archivo: tarea_vo.py
-
 class TareaVO:
     def __init__(self, TareaID=None, GrupoID=None, Titulo=None,
                  Descripcion=None, FechaLimite=None):
 
-        # Validación: Titulo
         if Titulo is not None and isinstance(Titulo, str) and not Titulo.strip():
             raise ValueError(
                 "El título de la tarea no puede consistir únicamente en espacios en blanco."
@@ -16,7 +13,6 @@ class TareaVO:
         self._Descripcion = Descripcion
         self._FechaLimite = FechaLimite
 
-    # --- PROPIEDADES DE SOLO LECTURA ---
 
     @property
     def TareaID(self):
@@ -38,7 +34,6 @@ class TareaVO:
     def FechaLimite(self):
         return self._FechaLimite
 
-    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, TareaVO):

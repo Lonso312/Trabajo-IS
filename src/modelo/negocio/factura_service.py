@@ -7,9 +7,6 @@ class FacturaService:
     def __init__(self, factura_dao):
         self.factura_dao = factura_dao
 
-    # ------------------------------------------------------------------
-    # CONSULTA
-    # ------------------------------------------------------------------
     def obtener_todas_las_facturas(self):
         """Devuelve la lista de facturas formateadas como diccionarios."""
         try:
@@ -18,9 +15,6 @@ class FacturaService:
             print(f"[FacturaService] Error obteniendo facturas: {e}")
             return []
 
-    # ------------------------------------------------------------------
-    # CREACIÓN
-    # ------------------------------------------------------------------
     def crear_factura(self, datos: dict):
         """
         Valida los datos recibidos desde el controlador y persiste
@@ -31,7 +25,6 @@ class FacturaService:
         fecha = datos.get("fecha") or datetime.date.today().strftime("%Y-%m-%d")
         estado = str(datos.get("estado", "Pendiente")).strip()
 
-        # --- Validaciones de negocio ---
         if not concepto:
             return False, "El concepto no puede estar vacío."
 
@@ -46,7 +39,6 @@ class FacturaService:
         if monto_float < 0:
             return False, "El monto no puede ser negativo."
 
-        # Construcción del VO (el setter también valida)
         try:
             factura = FacturaVO(
                 concepto=concepto,
@@ -57,15 +49,11 @@ class FacturaService:
         except ValueError as e:
             return False, str(e)
 
-        # Persistencia
         exito = self.factura_dao.insertar_factura(factura)
         if exito:
             return True, "Factura registrada correctamente."
         return False, "No se pudo guardar la factura en la base de datos."
 
-    # ------------------------------------------------------------------
-    # ACTUALIZACIÓN
-    # ------------------------------------------------------------------
     def actualizar_factura(self, factura_id: int, datos: dict):
         """
         Valida los datos y actualiza una factura existente.
@@ -75,7 +63,6 @@ class FacturaService:
         monto_raw = str(datos.get("monto", "0")).strip().replace(",", ".")
         estado = str(datos.get("estado", "Pendiente")).strip()
 
-        # --- Validaciones de negocio ---
         if not factura_id:
             return False, "ID de factura inválido."
 
@@ -93,13 +80,11 @@ class FacturaService:
         if monto_float < 0:
             return False, "El monto no puede ser negativo."
 
-        # Validación adicional con el VO
         try:
             FacturaVO(concepto=concepto, monto=monto_float, estado=estado)
         except ValueError as e:
             return False, str(e)
 
-        # Persistencia
         exito = self.factura_dao.actualizar_factura(factura_id, concepto, monto_float, estado)
         if exito:
             return True, "Factura actualizada correctamente."

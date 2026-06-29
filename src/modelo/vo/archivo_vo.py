@@ -1,5 +1,3 @@
-# archivo: archivo_vo.py
-
 class ArchivoVO:
     def __init__(self, idArchivo=None, nombre=None, ruta=None, tipo=None):
 

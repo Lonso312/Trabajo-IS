@@ -1,24 +1,19 @@
-# archivo: MiembroVO.py
-
 import re
 
 class MiembroVO:
     def __init__(self, UsuarioID=None, Name=None, Surname=None, DNI=None,
                  Email=None, NombreUsuario=None, Rol=None, Aceptado=None, Telefono=None):
 
-        # Validación: Name
         if Name is not None and isinstance(Name, str) and not Name.strip():
             raise ValueError("El nombre del miembro no puede ser una cadena de texto vacía.")
         self._Name = Name
 
-        # Validación: Email
         if Email is not None and str(Email).strip() and str(Email) != "None":
             email_regex = r"^[\w\.-]+@[\w\.-]+\.\w+$"
             if not re.match(email_regex, str(Email)):
                 raise ValueError(f"El formato del email '{Email}' no es válido para el Miembro.")
         self._Email = Email
 
-        # Validación: DNI
         if DNI is not None and str(DNI).strip() and str(DNI) != "None":
             cleaned_dni = str(DNI).upper().strip()
             if not re.match(r"^\d{8}[A-Z]$", cleaned_dni):
@@ -27,7 +22,6 @@ class MiembroVO:
         else:
             self._DNI = DNI
 
-        # Validación: Telefono
         if Telefono is not None and str(Telefono).strip() and str(Telefono) != "None":
             cleaned_tel = str(Telefono).replace(" ", "").replace("-", "")
             if not re.match(r"^[6789]\d{8}$", cleaned_tel):
@@ -42,7 +36,6 @@ class MiembroVO:
         self._Rol = Rol
         self._Aceptado = Aceptado
 
-    # --- PROPIEDADES DE SOLO LECTURA ---
 
     @property
     def UsuarioID(self):
@@ -80,7 +73,6 @@ class MiembroVO:
     def Telefono(self):
         return self._Telefono
 
-    # --- COMPARACIÓN ESTRUCTURAL ---
 
     def __eq__(self, otro):
         if not isinstance(otro, MiembroVO):
