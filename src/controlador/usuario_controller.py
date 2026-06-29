@@ -11,11 +11,6 @@ class UsuarioController:
 
 
     def abrir_pantalla_gestion(self):
-        """
-        Carga los datos iniciales en la vista de gestión de miembros.
-        La vista ya debe haber sido inyectada en self.vista_gestion
-        antes de llamar a este método (lo hace ControladorApp o menu_view).
-        """
         if not self.vista_gestion:
             return
 
