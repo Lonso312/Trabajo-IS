@@ -53,23 +53,23 @@ class ControladorApp:
             secretaria_dao   = SecretariaDAO(self.conexion)
             archivos_dao     = ArchivosDAO(self.conexion)
 
-            # Servicios (negocio)
-            self.usuario_service   = UsuarioService(miembro_dao, departamento_dao, grupo_dao)
-            self.tarea_service     = TareaService(tarea_dao)
-            self.grupo_service     = GrupoService(grupo_dao)
-            self.bienes_service    = BienesService(bienes_dao)
-            self.archivos_service  = ArchivosService(archivos_dao)
-            self.factura_service   = FacturaService(factura_dao)
-            self.solicitud_service = SolicitudService(solicitud_dao)
-            self.secretaria_service= SecretariaService(secretaria_dao)
+            # Servicios
+            self.usuario_service    = UsuarioService(miembro_dao, departamento_dao, grupo_dao)
+            self.tarea_service      = TareaService(tarea_dao)
+            self.grupo_service      = GrupoService(grupo_dao)
+            self.bienes_service     = BienesService(bienes_dao)
+            self.archivos_service   = ArchivosService(archivos_dao)
+            self.factura_service    = FacturaService(factura_dao)
+            self.solicitud_service  = SolicitudService(solicitud_dao)
+            self.secretaria_service = SecretariaService(secretaria_dao)
 
-            # Controladores (reciben servicios, no DAOs)
-            self.usuario_controller   = UsuarioController(self.usuario_service)
-            self.tarea_controller     = TareaController(self.tarea_service)
-            self.grupo_controller     = GrupoController(self.grupo_service)
-            self.factura_controller   = FacturaController(self.factura_service)
-            self.solicitud_controller = SolicitudController(self.solicitud_service)
-            self.secretaria_controller= SecretariaController(self.secretaria_service)
+            # Controladores (reciben servicios, nunca vistas)
+            self.usuario_controller    = UsuarioController(self.usuario_service)
+            self.tarea_controller      = TareaController(self.tarea_service)
+            self.grupo_controller      = GrupoController(self.grupo_service)
+            self.factura_controller    = FacturaController(self.factura_service)
+            self.solicitud_controller  = SolicitudController(self.solicitud_service)
+            self.secretaria_controller = SecretariaController(self.secretaria_service)
 
         except Exception as e:
             print(f"Error crítico: {e}")
@@ -110,13 +110,13 @@ class ControladorApp:
             )
 
             # Inyección de controladores en la vista del menú
-            self.menu_view.grupo_controller     = self.grupo_controller
-            self.menu_view.tarea_controller     = self.tarea_controller
-            self.menu_view.bienes_controller    = self.bienes_controller
-            self.menu_view.archivos_controller  = self.archivos_controller
-            self.menu_view.factura_controller   = self.factura_controller
-            self.menu_view.solicitud_controller = self.solicitud_controller
-            self.menu_view.secretaria_controller= self.secretaria_controller
+            self.menu_view.grupo_controller      = self.grupo_controller
+            self.menu_view.tarea_controller      = self.tarea_controller
+            self.menu_view.bienes_controller     = self.bienes_controller
+            self.menu_view.archivos_controller   = self.archivos_controller
+            self.menu_view.factura_controller    = self.factura_controller
+            self.menu_view.solicitud_controller  = self.solicitud_controller
+            self.menu_view.secretaria_controller = self.secretaria_controller
 
             self.menu_view.show()
         else:
@@ -132,14 +132,32 @@ class ControladorApp:
         self.archivos_controller = None
         self.secretaria_controller.usuario_logueado = None
 
-        # Limpia el campo contraseña y vuelve a mostrar el login
         self.login_view.ContrasenaEdit.clear()
         self.login_view.UsuarioEdit.clear()
         self.login_view.show()
 
     def abrir_gestion_miembros(self):
+        """
+        Crea la vista de gestión de miembros aquí (en main, no en el controlador),
+        la inyecta en el controlador y luego pide al controlador que la cargue.
+        """
+        from vistas.codigo.gestion_miembros_view import GestionMiembrosView
+
         if self.miembro:
             self.usuario_controller.usuario_logueado = self.miembro
+
+        # La VISTA se instancia en la capa de presentación (main/ControladorApp)
+        vista = GestionMiembrosView(
+            callback_filtrar=self.usuario_controller.filtrar_miembros,
+            callback_seleccionar_miembro=self.usuario_controller.cargar_detalle_miembro,
+            callback_aceptar=self.usuario_controller.procesar_aceptar_miembro,
+            callback_eliminar=self.usuario_controller.procesar_eliminar_miembro,
+            callback_actualizar=self.usuario_controller.procesar_actualizar_miembro,
+            controller=self.usuario_controller
+        )
+
+        # Se inyecta en el controlador ANTES de llamar a abrir_pantalla_gestion
+        self.usuario_controller.vista_gestion = vista
         self.usuario_controller.abrir_pantalla_gestion()
 
 

@@ -787,11 +787,20 @@ class MenuView(QMainWindow):
             self.cargar_grupos_izquierdos()
 
     def abrir_modulo_bienes(self):
-        if hasattr(self, 'bienes_controller') and self.bienes_controller:
-            self.bienes_controller.abrir_pantalla_bienes()
+        if not (hasattr(self, 'bienes_controller') and self.bienes_controller):
+            return
+        from vistas.codigo.gestion_bienes_view import GestionBienesView
+        vista = GestionBienesView(self.bienes_controller)
+        self.bienes_controller.vista_gestion = vista
+        exito, msg = self.bienes_controller.abrir_pantalla_bienes()
+        if not exito:
+            QMessageBox.warning(self, "Acceso denegado", msg)
 
     def abrir_modulo_archivos(self):
-        if hasattr(self, 'archivos_controller') and self.archivos_controller:
-            self.archivos_controller.abrir_pantalla_archivos() 
-        else:
+        if not (hasattr(self, 'archivos_controller') and self.archivos_controller):
             QMessageBox.information(self, "Módulo Documental", "Accediendo al repositorio centralizado de archivos compartidos...")
+            return
+        from vistas.codigo.archivos_view import ArchivosView
+        vista = ArchivosView(self.archivos_controller)
+        self.archivos_controller.vista_archivos = vista
+        self.archivos_controller.abrir_pantalla_archivos()

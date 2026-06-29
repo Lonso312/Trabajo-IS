@@ -2,16 +2,27 @@ class BienesController:
     def __init__(self, bienes_service, miembro_autenticado_vo):
         self.service = bienes_service
         self.usuario_actual = miembro_autenticado_vo
-        self.vista_gestion = None
+        self.vista_gestion = None       # inyectada desde fuera (menu_view)
 
     def abrir_pantalla_bienes(self):
+        """
+        Verifica acceso y carga los datos en la vista de bienes.
+        La vista ya debe haber sido inyectada en self.vista_gestion
+        antes de llamar a este método (lo hace menu_view).
+        Devuelve (False, msg) si el rol no tiene permiso, para que
+        menu_view pueda mostrar el aviso sin que el controlador lo haga.
+        """
         acceso, msg = self.service.verificar_acceso(self.usuario_actual.Rol)
         if not acceso:
             return False, msg
-        from vistas.codigo.gestion_bienes_view import GestionBienesView
-        self.vista_gestion = GestionBienesView(self)
+
+        if not self.vista_gestion:
+            return False, "La vista de bienes no está disponible."
+
         self.cargar_bienes()
         self.vista_gestion.show()
+        return True, ""
+
 
     def cargar_bienes(self):
         if not self.vista_gestion:
@@ -25,10 +36,15 @@ class BienesController:
         if bien_vo:
             self.vista_gestion.mostrar_detalle_bien(bien_vo)
 
+
     def añadir_bien(self, datos):
+        if not self.vista_gestion:
+            return
         try:
             if self.service.añadir_bien(datos):
-                self.vista_gestion.mostrar_mensaje_exito("Bien añadido correctamente al inventario.")
+                self.vista_gestion.mostrar_mensaje_exito(
+                    "Bien añadido correctamente al inventario."
+                )
                 self.cargar_bienes()
                 self.vista_gestion.mostrar_mensaje_vacio()
             else:
@@ -36,18 +52,26 @@ class BienesController:
         except Exception as e:
             self.vista_gestion.mostrar_mensaje_error(f"Error al añadir el bien: {str(e)}")
 
+
     def actualizar_bien(self, bien_id, datos):
+        if not self.vista_gestion:
+            return
         try:
             if self.service.actualizar_bien(bien_id, datos):
                 self.vista_gestion.mostrar_mensaje_exito("Bien modificado correctamente.")
                 self.cargar_bienes()
                 self.seleccionar_bien(bien_id)
             else:
-                self.vista_gestion.mostrar_mensaje_error("No se pudieron guardar las modificaciones.")
+                self.vista_gestion.mostrar_mensaje_error(
+                    "No se pudieron guardar las modificaciones."
+                )
         except Exception as e:
             self.vista_gestion.mostrar_mensaje_error(f"Error al actualizar el bien: {str(e)}")
 
+
     def eliminar_bien(self, bien_id):
+        if not self.vista_gestion:
+            return
         try:
             if self.service.eliminar_bien(bien_id):
                 self.vista_gestion.mostrar_mensaje_exito("Bien eliminado del inventario.")
